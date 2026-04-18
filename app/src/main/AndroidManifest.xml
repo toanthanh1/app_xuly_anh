@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.App_xhinh_anh">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SecondActivity"
+            android:name=".ui.editor.EditorActivity"
             android:exported="false" />
 
         <provider

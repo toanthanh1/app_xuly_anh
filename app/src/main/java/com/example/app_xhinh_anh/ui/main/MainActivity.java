@@ -1,4 +1,4 @@
-package com.example.app_xhinh_anh;
+package com.example.app_xhinh_anh.ui.main;
 
 import android.os.Bundle;
 
@@ -8,7 +8,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.app_xhinh_anh.utils.ImageActionManager;
+import com.example.app_xhinh_anh.R;
 
 public class MainActivity extends AppCompatActivity {
 

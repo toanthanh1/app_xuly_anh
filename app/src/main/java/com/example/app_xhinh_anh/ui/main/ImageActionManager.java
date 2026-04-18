@@ -1,4 +1,4 @@
-package com.example.app_xhinh_anh.utils;
+package com.example.app_xhinh_anh.ui.main;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
 import com.example.app_xhinh_anh.R;
-import com.example.app_xhinh_anh.SecondActivity;
+import com.example.app_xhinh_anh.ui.editor.EditorActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,14 +36,14 @@ public class ImageActionManager {
         mGetContent = activity.registerForActivityResult(new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri != null) {
-                        navigateToSecondActivity(uri);
+                        navigateToEditorActivity(uri);
                     }
                 });
 
         mTakePicture = activity.registerForActivityResult(new ActivityResultContracts.TakePicture(),
                 success -> {
                     if (success && photoUri != null) {
-                        navigateToSecondActivity(photoUri);
+                        navigateToEditorActivity(photoUri);
                     }
                 });
     }
@@ -70,8 +70,8 @@ public class ImageActionManager {
         }
     }
 
-    private void navigateToSecondActivity(Uri uri) {
-        Intent intent = new Intent(activity, SecondActivity.class);
+    private void navigateToEditorActivity(Uri uri) {
+        Intent intent = new Intent(activity, EditorActivity.class);
         intent.putExtra("image_uri", uri.toString());
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         activity.startActivity(intent);
