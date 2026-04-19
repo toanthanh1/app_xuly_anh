@@ -40,6 +40,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // Image libraries
+    implementation(libs.glide)
+    implementation(libs.ucrop)
+    implementation(libs.photoeditor)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

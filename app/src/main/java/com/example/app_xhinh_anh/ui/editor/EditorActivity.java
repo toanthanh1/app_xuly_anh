@@ -10,6 +10,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.app_xhinh_anh.R;
 
 public class EditorActivity extends AppCompatActivity {
@@ -31,7 +32,11 @@ public class EditorActivity extends AppCompatActivity {
         String imageUriString = getIntent().getStringExtra("image_uri");
         if (imageUriString != null) {
             Uri imageUri = Uri.parse(imageUriString);
-            ivSelectedImage.setImageURI(imageUri);
+            
+            // Sử dụng Glide để load ảnh (tự động xử lý cả Gallery và Camera URI)
+            Glide.with(this)
+                    .load(imageUri)
+                    .into(ivSelectedImage);
         }
     }
 }
