@@ -1,14 +1,13 @@
 package com.example.app_xhinh_anh.ui.main;
 
 import android.os.Bundle;
-
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
 import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.ui.main.ImageActionManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
         // Khởi tạo trình quản lý chức năng hình ảnh
         imageActionManager = new ImageActionManager(this);
         
-        // Thiết lập sự kiện cho các button (được gọi từ layout include)
+        // Kết nối các nút bấm trên giao diện mới (btnCaptureImage và btnPickImage)
         imageActionManager.setUpButtons(findViewById(R.id.main));
     }
 }
