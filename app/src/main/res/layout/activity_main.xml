@@ -12,20 +12,30 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="40dp"
+        android:fontFamily="cursive"
+        android:includeFontPadding="false"
+        android:letterSpacing="0.12"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:rotation="-3"
+        android:shadowColor="#A000C9A7"
+        android:shadowDx="4"
+        android:shadowDy="4"
+        android:shadowRadius="14"
         android:text="Nhóm 5"
         android:textColor="@color/brand_green"
-        android:textSize="36sp"
-        android:textStyle="bold"
+        android:textSize="52sp"
+        android:textStyle="bold|italic"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/imgLogo"
-        android:layout_width="250dp"
-        android:layout_height="250dp"
-        android:layout_marginTop="24dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="32dp"
         android:src="@mipmap/ic_launcher"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -36,9 +46,11 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
-        android:padding="32dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="24dp"
         app:layout_constraintBottom_toTopOf="@+id/footer"
-        app:layout_constraintTop_toBottomOf="@id/imgLogo">
+        app:layout_constraintTop_toBottomOf="@id/imgLogo"
+        app:layout_constraintVertical_bias="0.5">
 
         <Button
             android:id="@+id/btnCaptureImage"
@@ -77,7 +89,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Nguyễn Minh Phước - 22200128"
+            android:text="Đào Vũ Ngọc Chính - 22200022"
             android:textColor="@color/white"
             android:textSize="16sp" />
         <TextView
@@ -91,14 +103,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Nguyễn Minh Phước - 22200128"
+            android:text="Đoàn Lê Thanh Toàn - 22200188"
             android:textColor="@color/white"
             android:textSize="16sp" />
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Nguyễn Minh Phước - 22200128"
+            android:text="Nguyễn Quốc Trường - 22200172"
             android:textColor="@color/white"
             android:textSize="16sp" />
 

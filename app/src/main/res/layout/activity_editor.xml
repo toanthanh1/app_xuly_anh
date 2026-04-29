@@ -14,18 +14,495 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/brand_green"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Chỉnh sửa ảnh"
-        app:titleTextColor="@color/white" />
+        app:navigationIcon="@drawable/ic_back_arrow"
+        app:title=""
+        app:titleTextColor="@color/white">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnUndo"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Hoàn tác"
+                android:src="@drawable/ic_undo"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btnRedo"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Làm lại"
+                android:src="@drawable/ic_redo"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingHorizontal="16dp"
+                android:text="Lưu"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+    </androidx.appcompat.widget.Toolbar>
 
     <ja.burhanrashid52.photoeditor.PhotoEditorView
         android:id="@+id/photoEditorView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/toolsScroll"
+        app:layout_constraintBottom_toTopOf="@+id/editorBottomPanel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
+
+    <FrameLayout
+        android:id="@+id/editorBottomPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/toolsScroll"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+    <LinearLayout
+        android:id="@+id/adjustPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp">
+
+                <LinearLayout
+                    android:id="@+id/tabBrightness"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconBrightness"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Độ sáng"
+                        android:src="@drawable/ic_brightness"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelBrightness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Độ sáng"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabContrast"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconContrast"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Tương phản"
+                        android:src="@drawable/ic_contrast"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelContrast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Tương phản"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabSaturation"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconSaturation"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Bão hòa"
+                        android:src="@drawable/ic_saturation"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelSaturation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Bão hòa"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabSharpness"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconSharpness"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Sắc nét"
+                        android:src="@drawable/ic_sharpness"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelSharpness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Sắc nét"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabClarity"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconClarity"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Rõ nét"
+                        android:src="@drawable/ic_clarity"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelClarity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Rõ nét"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabHsl"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconHsl"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="HSL"
+                        android:src="@drawable/ic_hsl"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelHsl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="HSL"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabCurves"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconCurves"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Đường cong"
+                        android:src="@drawable/ic_curves"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelCurves"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Đường cong"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabHighlights"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconHighlights"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Vùng sáng"
+                        android:src="@drawable/ic_highlights"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelHighlights"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Vùng sáng"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabShadows"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconShadows"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Vùng tối"
+                        android:src="@drawable/ic_shadows"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelShadows"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Vùng tối"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/adjustValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:text="0"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.example.app_xhinh_anh.ui.editor.RulerView
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_marginBottom="-6dp" />
+
+        <SeekBar
+            android:id="@+id/seekAdjust"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="50" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:paddingTop="4dp">
+
+            <Button
+                android:id="@+id/btnAdjustReset"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đặt lại"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnAdjustApply"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xong"
+                android:textColor="@color/brand_green" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/filterPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/filterCategoryTabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="2dp" />
+        </HorizontalScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="6dp"
+            android:background="#333333" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/filterVariantsList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/filterIntensityValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:text="100"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.example.app_xhinh_anh.ui.editor.RulerView
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_marginBottom="-6dp" />
+
+        <SeekBar
+            android:id="@+id/filterIntensitySeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="100" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:paddingTop="4dp">
+
+            <Button
+                android:id="@+id/btnFilterReset"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đặt lại"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnFilterApply"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xong"
+                android:textColor="@color/brand_green" />
+        </LinearLayout>
+    </LinearLayout>
+
+    </FrameLayout>
 
     <HorizontalScrollView
         android:id="@+id/toolsScroll"
@@ -33,84 +510,206 @@
         android:layout_height="wrap_content"
         android:background="#1A1A1A"
         android:paddingVertical="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomControl">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingHorizontal="8dp">
+            android:paddingHorizontal="4dp">
 
-            <Button
+            <LinearLayout
                 android:id="@+id/btnCrop"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="68dp"
                 android:layout_height="wrap_content"
-                android:text="Cắt"
-                android:textColor="@color/white" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Cắt"
+                    android:src="@drawable/ic_crop"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Cắt"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnFlip"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="68dp"
                 android:layout_height="wrap_content"
-                android:text="Lật"
-                android:textColor="@color/white" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Lật"
+                    android:src="@drawable/ic_flip"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Lật"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnAdjust"
+                android:layout_width="68dp"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Chỉnh"
+                    android:src="@drawable/ic_tune"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Chỉnh"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnFilter"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="68dp"
                 android:layout_height="wrap_content"
-                android:text="Bộ lọc"
-                android:textColor="@color/white" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Bộ lọc"
+                    android:src="@drawable/ic_filter"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Bộ lọc"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnBrush"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="68dp"
                 android:layout_height="wrap_content"
-                android:text="Vẽ"
-                android:textColor="@color/white" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
 
-            <Button
+                <ImageView
+                    android:id="@+id/iconBrush"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Vẽ"
+                    android:src="@drawable/ic_brush"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/labelBrush"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Vẽ"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnAddText"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="68dp"
                 android:layout_height="wrap_content"
-                android:text="Văn bản"
-                android:textColor="@color/white" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Văn bản"
+                    android:src="@drawable/ic_text"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Văn bản"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnSticker"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="68dp"
                 android:layout_height="wrap_content"
-                android:text="Sticker"
-                android:textColor="@color/white" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Sticker"
+                    android:src="@drawable/ic_sticker"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Sticker"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
         </LinearLayout>
     </HorizontalScrollView>
-
-    <LinearLayout
-        android:id="@+id/bottomControl"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#222222"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <Button
-            android:id="@+id/btnSave"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/brand_green"
-            android:text="Lưu lại"
-            android:textAllCaps="false"
-            android:textColor="@color/white" />
-
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
