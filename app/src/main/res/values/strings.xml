@@ -2,4 +2,8 @@
     <string name="app_name">App_xhinh_anh</string>
     <string name="undo">Hoàn tác</string>
     <string name="redo">Làm lại</string>
+    <string name="ai_rm_bg">Xóa nền</string>
+    <string name="processing">Đang xử lý...</string>
+    <string name="ai_error">Lỗi xử lý AI</string>
+    <string name="no_subject_found">Không tìm thấy chủ thể để tách nền</string>
 </resources>

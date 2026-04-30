@@ -52,6 +52,11 @@ import ja.burhanrashid52.photoeditor.PhotoEditorView;
 import ja.burhanrashid52.photoeditor.SaveSettings;
 import ja.burhanrashid52.photoeditor.ViewType;
 
+import com.example.app_xhinh_anh.processing.ai.AiProcessor;
+import com.example.app_xhinh_anh.processing.ai.BackgroundRemoverAi;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
+import android.app.ProgressDialog;
+
 public class EditorActivity extends AppCompatActivity {
 
     private static final String TAG = "EditorActivity";
@@ -97,6 +102,8 @@ public class EditorActivity extends AppCompatActivity {
     private int curvesValue = 0;
     private int highlightsValue = 0;
     private int shadowsValue = 0;
+
+    private BackgroundRemoverAi backgroundRemoverAi;
 
     // ==== Filter panel (Trắng đen / Hoài cổ / Cổ điển / Hits / Portrait / Texture) ====
     private LinearLayout filterPanel;
@@ -882,7 +889,43 @@ public class EditorActivity extends AppCompatActivity {
         btnSticker.setOnClickListener(v ->
                 Toast.makeText(this, "Tính năng Sticker/Icon sẽ cần thêm bộ icon", Toast.LENGTH_SHORT).show());
 
+        LinearLayout btnAiRmBg = findViewById(R.id.btnAiRmBg);
+        backgroundRemoverAi = new BackgroundRemoverAi();
+        btnAiRmBg.setOnClickListener(v -> performAiBackgroundRemoval());
+
         btnSave.setOnClickListener(v -> saveProcessedImage());
+    }
+
+    private void performAiBackgroundRemoval() {
+        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
+            Toast.makeText(this, "Không có ảnh để xử lý", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Bitmap currentBitmap = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        if (currentBitmap == null) return;
+
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Đang xóa nền AI...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        backgroundRemoverAi.process(currentBitmap, new AiProcessor.AiCallback() {
+            @Override
+            public void onSuccess(Bitmap result) {
+                progressDialog.dismiss();
+                saveBitmapState();
+                photoEditorView.getSource().setImageBitmap(result);
+                Toast.makeText(EditorActivity.this, "Đã xóa nền!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                progressDialog.dismiss();
+                Toast.makeText(EditorActivity.this, "Lỗi AI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "AI Error: ", e);
+            }
+        });
     }
 
     private void saveProcessedImage() {

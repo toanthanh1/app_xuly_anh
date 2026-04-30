@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.ucrop)
     implementation(libs.photoeditor)
+    implementation(libs.mlkit.subject.segmentation)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
