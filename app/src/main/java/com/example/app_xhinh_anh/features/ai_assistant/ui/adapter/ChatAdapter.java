@@ -34,14 +34,26 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         holder.tvMessage.setText(message.getMessage());
 
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) holder.tvMessage.getLayoutParams();
+        LinearLayout.LayoutParams imgParams = (LinearLayout.LayoutParams) holder.ivMessageImage.getLayoutParams();
+
         if (message.isUser()) {
             params.gravity = Gravity.END;
+            imgParams.gravity = Gravity.END;
             holder.tvMessage.setBackgroundResource(R.drawable.bg_chat_bubble_user);
         } else {
             params.gravity = Gravity.START;
+            imgParams.gravity = Gravity.START;
             holder.tvMessage.setBackgroundResource(R.drawable.bg_chat_bubble_ai);
         }
         holder.tvMessage.setLayoutParams(params);
+        holder.ivMessageImage.setLayoutParams(imgParams);
+
+        if (message.getImage() != null) {
+            holder.ivMessageImage.setVisibility(View.VISIBLE);
+            holder.ivMessageImage.setImageBitmap(message.getImage());
+        } else {
+            holder.ivMessageImage.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -51,10 +63,12 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage;
+        ImageView ivMessageImage;
 
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             tvMessage = itemView.findViewById(R.id.tvMessage);
+            ivMessageImage = itemView.findViewById(R.id.ivMessageImage);
         }
     }
 }

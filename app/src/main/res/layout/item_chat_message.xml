@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/chatBubbleContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -15,5 +16,16 @@
         android:paddingVertical="8dp"
         android:textColor="@color/white"
         android:textSize="14sp" />
+
+    <ImageView
+        android:id="@+id/ivMessageImage"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginTop="4dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:background="@drawable/bg_filter_thumb_selected"
+        android:padding="2dp" />
 
 </LinearLayout>
