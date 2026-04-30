@@ -1116,20 +1116,24 @@ public class EditorActivity extends AppCompatActivity {
                     ActionMapper.map(response, new ActionMapper.ActionListener() {
                         @Override
                         public void onApplyFilter(String filterName) {
+                            // Thêm tin nhắn xác nhận thay vì hiện mã JSON
+                            chatAdapter.addMessage(new ChatMessage("Đang áp dụng bộ lọc: " + filterName, false));
                             applyAiFilter(filterName);
                         }
 
                         @Override
                         public void onAdjustProperty(String property, int value) {
+                            // Thêm tin nhắn xác nhận
+                            chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
                             applyAiAdjustment(property, value);
                         }
 
                         @Override
                         public void onMessage(String msg) {
                             chatAdapter.addMessage(new ChatMessage(msg, false));
-                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
                     });
+                    rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                 });
             }
 
@@ -1145,12 +1149,20 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void applyAiFilter(String filterName) {
-        // Simple mapping for Phase 1
-        Toast.makeText(this, "Đang áp dụng bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
-        
-        openFilterPanel();
-        // In a real implementation, we would iterate filters and find one matching filterName
-        // For now, we just show the panel.
+        // Tìm kiếm bộ lọc trong danh sách Category
+        for (FilterPreset.Category category : FilterPreset.CATEGORIES) {
+            for (FilterPreset variant : category.variants) {
+                if (variant.displayName.equalsIgnoreCase(filterName)) {
+                    runOnUiThread(() -> {
+                        selectedVariant = variant;
+                        applyColorFilter(variant.matrix, filterIntensity);
+                        Toast.makeText(this, "Đã áp dụng: " + filterName, Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+            }
+        }
+        Toast.makeText(this, "Không tìm thấy bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
     }
 
     private void applyAiAdjustment(String property, int value) {
