@@ -11,9 +11,16 @@ public class ActionMapper {
 
     public static void map(String aiResponse, ActionListener listener) {
         try {
-            // Remove markdown code blocks if present
-            String cleanedResponse = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
-            JSONObject json = new JSONObject(cleanedResponse);
+            String jsonStr = aiResponse;
+            // Tìm vị trí của dấu { đầu tiên và } cuối cùng để trích xuất JSON
+            int start = aiResponse.indexOf("{");
+            int end = aiResponse.lastIndexOf("}");
+            
+            if (start != -1 && end != -1 && end > start) {
+                jsonStr = aiResponse.substring(start, end + 1);
+            }
+
+            JSONObject json = new JSONObject(jsonStr);
             String action = json.optString("action", "");
 
             switch (action) {
@@ -29,7 +36,7 @@ public class ActionMapper {
                     break;
             }
         } catch (Exception e) {
-            // If not JSON or parsing fails, treat as a plain message
+            // Nếu không tìm thấy JSON hoặc lỗi, coi như là tin nhắn văn bản
             listener.onMessage(aiResponse);
         }
     }
