@@ -803,7 +803,27 @@ public class EditorActivity extends AppCompatActivity {
         setupFilterControls(btnFilterReset, btnFilterApply);
 
 
-        btnCrop.setOnClickListener(v -> startCrop(currentImageUri));
+        btnCrop.setOnClickListener(v -> {
+            // Lưu trạng thái hiện tại (bao gồm filter, adjust, sticker, text...) vào file tạm để Crop
+            File tempFile = new File(getCacheDir(), "crop_source_" + System.currentTimeMillis() + ".jpg");
+
+            SaveSettings saveSettings = new SaveSettings.Builder()
+                    .setClearViewsEnabled(true)
+                    .setTransparencyEnabled(false)
+                    .build();
+
+            photoEditor.saveAsFile(tempFile.getAbsolutePath(), saveSettings, new PhotoEditor.OnSaveListener() {
+                @Override
+                public void onSuccess(@NonNull String imagePath) {
+                    startCrop(Uri.fromFile(new File(imagePath)));
+                }
+
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    Toast.makeText(EditorActivity.this, "Không thể chuẩn bị ảnh để cắt", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
         
         btnFlip.setOnClickListener(v -> {
             saveBitmapState();
@@ -969,7 +989,12 @@ public class EditorActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP && data != null) {
             final Uri resultUri = UCrop.getOutput(data);
             if (resultUri != null) {
+                // Lưu trạng thái cũ vào Undo trước khi đổi sang ảnh đã crop
+                saveBitmapState();
+
+                // Cập nhật Uri hiện tại và làm mới PhotoEditor
                 currentImageUri = resultUri;
+                photoEditor.clearAllViews(); // Xóa các layer cũ vì chúng đã được bake vào ảnh crop
                 photoEditorView.getSource().setImageURI(currentImageUri);
             }
         }
