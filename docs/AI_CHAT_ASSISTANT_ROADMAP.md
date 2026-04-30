@@ -4,7 +4,26 @@ Tài liệu này phác thảo lộ trình xây dựng tính năng "Conversationa
 
 ---
 
-## Phase 1: AI Điều phối Lệnh cơ bản (Action Mapping)
+## 1. Tổ chức Thư mục (Project Structure)
+
+Để quản lý tính năng chat AI tách biệt với trình chỉnh sửa ảnh chính, cấu trúc folder được thiết lập như sau:
+
+```text
+📂 com.example.app_xhinh_anh
+┗ 📂 features
+  ┗ 📂 ai_assistant            <-- Folder chính cho tính năng AI
+    ┣ 📂 data                  (Xử lý kết nối Gemini API)
+    ┃ ┣ 📜 GeminiApiClient.java
+    ┃ ┗ 📜 AIResponseModels.java
+    ┣ 📂 domain                (Logic xử lý lệnh)
+    ┃ ┣ 📜 ActionMapper.java    (Dịch JSON AI -> Lệnh App)
+    ┃ ┗ 📜 PromptProvider.java  (Nơi chứa System Prompt)
+    ┗ 📂 ui                    (Giao diện khung Chat)
+      ┣ 📜 ChatAdapter.java
+      ┗ 📜 ChatViewModel.java
+```
+
+## 2. Các giai đoạn triển khai (Phases)
 
 **Mục tiêu:** Xây dựng hệ thống chat cơ bản, nơi AI đóng vai trò như một "người trực tổng đài", lắng nghe yêu cầu của người dùng và tự động bấm hộ các nút Filter đã có sẵn trong app.
 

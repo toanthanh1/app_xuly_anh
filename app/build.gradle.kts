@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.ucrop)
     implementation(libs.photoeditor)
     implementation(libs.mlkit.subject.segmentation)
+    implementation(libs.generativeai)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

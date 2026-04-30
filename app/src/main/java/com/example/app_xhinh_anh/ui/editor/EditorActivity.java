@@ -41,6 +41,18 @@ import com.example.app_xhinh_anh.R;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
+import com.example.app_xhinh_anh.features.ai_assistant.data.GeminiApiClient;
+import com.example.app_xhinh_anh.features.ai_assistant.domain.ActionMapper;
+import com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage;
+import com.example.app_xhinh_anh.features.ai_assistant.ui.AiAssistantActivity;
+import com.example.app_xhinh_anh.features.ai_assistant.ui.adapter.ChatAdapter;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.widget.ProgressBar;
+import android.widget.EditText;
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -118,6 +130,16 @@ public class EditorActivity extends AppCompatActivity {
     private FilterPreset selectedVariant;
     private View selectedVariantView;
     private int filterIntensity = 100;
+
+    // AI Assistant
+    private LinearLayout chatPanel;
+    private RecyclerView rvChatHistory;
+    private ChatAdapter chatAdapter;
+    private EditText etChatInput;
+    private ImageButton btnSendChat;
+    private ProgressBar pbAiThinking;
+    private GeminiApiClient geminiApiClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -809,6 +831,9 @@ public class EditorActivity extends AppCompatActivity {
         setupAdjustControls(btnAdjust, btnAdjustReset, btnAdjustApply);
         setupFilterControls(btnFilterReset, btnFilterApply);
 
+        // AI Assistant
+        setupAiAssistant();
+
 
         btnCrop.setOnClickListener(v -> {
             // Lưu trạng thái hiện tại (bao gồm filter, adjust, sticker, text...) vào file tạm để Crop
@@ -1026,20 +1051,135 @@ public class EditorActivity extends AppCompatActivity {
         uCrop.start(this);
     }
 
+    private void setupAiAssistant() {
+        findViewById(R.id.btnAiAssistant).setOnClickListener(v -> {
+            Intent intent = new Intent(this, AiAssistantActivity.class);
+            startActivityForResult(intent, 1001);
+        });
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP && data != null) {
-            final Uri resultUri = UCrop.getOutput(data);
-            if (resultUri != null) {
-                // Lưu trạng thái cũ vào Undo trước khi đổi sang ảnh đã crop
-                saveBitmapState();
+        if (resultCode == RESULT_OK && data != null) {
+            if (requestCode == 1001) {
+                String aiResponse = data.getStringExtra("ai_response");
+                if (aiResponse != null) {
+                    processAiAction(aiResponse);
+                }
+            } else if (requestCode == UCrop.REQUEST_CROP) {
+                final Uri resultUri = UCrop.getOutput(data);
+                if (resultUri != null) {
+                    // Lưu trạng thái cũ vào Undo trước khi đổi sang ảnh đã crop
+                    saveBitmapState();
 
-                // Cập nhật Uri hiện tại và làm mới PhotoEditor
-                currentImageUri = resultUri;
-                photoEditor.clearAllViews(); // Xóa các layer cũ vì chúng đã được bake vào ảnh crop
-                photoEditorView.getSource().setImageURI(currentImageUri);
+                    // Cập nhật Uri hiện tại và làm mới PhotoEditor
+                    currentImageUri = resultUri;
+                    photoEditor.clearAllViews(); // Xóa các layer cũ vì chúng đã được bake vào ảnh crop
+                    photoEditorView.getSource().setImageURI(currentImageUri);
+                }
             }
         }
     }
+
+    private void processAiAction(String aiResponse) {
+        ActionMapper.map(aiResponse, new ActionMapper.ActionListener() {
+            @Override
+            public void onApplyFilter(String filterName) {
+                applyAiFilter(filterName);
+            }
+
+            @Override
+            public void onAdjustProperty(String property, int value) {
+                applyAiAdjustment(property, value);
+            }
+
+            @Override
+            public void onMessage(String message) {
+                // Có thể hiển thị Toast hoặc một thông báo nhỏ
+                Toast.makeText(EditorActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void sendChatMessage(String message) {
+        chatAdapter.addMessage(new ChatMessage(message, true));
+        etChatInput.setText("");
+        rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+
+        pbAiThinking.setVisibility(View.VISIBLE);
+        geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
+            @Override
+            public void onSuccess(String response) {
+                runOnUiThread(() -> {
+                    pbAiThinking.setVisibility(View.GONE);
+                    ActionMapper.map(response, new ActionMapper.ActionListener() {
+                        @Override
+                        public void onApplyFilter(String filterName) {
+                            applyAiFilter(filterName);
+                        }
+
+                        @Override
+                        public void onAdjustProperty(String property, int value) {
+                            applyAiAdjustment(property, value);
+                        }
+
+                        @Override
+                        public void onMessage(String msg) {
+                            chatAdapter.addMessage(new ChatMessage(msg, false));
+                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                        }
+                    });
+                });
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                runOnUiThread(() -> {
+                    pbAiThinking.setVisibility(View.GONE);
+                    chatAdapter.addMessage(new ChatMessage("Lỗi: " + t.getMessage(), false));
+                    rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                });
+            }
+        });
+    }
+
+    private void applyAiFilter(String filterName) {
+        // Simple mapping for Phase 1
+        Toast.makeText(this, "Đang áp dụng bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
+        
+        openFilterPanel();
+        // In a real implementation, we would iterate filters and find one matching filterName
+        // For now, we just show the panel.
+    }
+
+    private void applyAiAdjustment(String property, int value) {
+        Toast.makeText(this, "Đang chỉnh " + property + " thành " + value, Toast.LENGTH_SHORT).show();
+
+        int mode = -1;
+        switch (property.toUpperCase()) {
+            case "BRIGHTNESS": mode = MODE_BRIGHTNESS; break;
+            case "CONTRAST": mode = MODE_CONTRAST; break;
+            case "SATURATION": mode = MODE_SATURATION; break;
+            // Add more mappings
+        }
+
+        if (mode != -1) {
+            final int targetMode = mode;
+            runOnUiThread(() -> {
+                if (adjustPanel.getVisibility() != View.VISIBLE) {
+                    findViewById(R.id.btnAdjust).performClick();
+                }
+                selectAdjustMode(targetMode);
+                seekAdjust.setProgress(value);
+            });
+        }
+    }
+
+    private void hideAllPanels() {
+        if (adjustPanel != null) adjustPanel.setVisibility(View.GONE);
+        if (filterPanel != null) filterPanel.setVisibility(View.GONE);
+        if (chatPanel != null) chatPanel.setVisibility(View.GONE);
+    }
+
 }
