@@ -598,7 +598,9 @@ public class EditorActivity extends AppCompatActivity {
         if (selectedVariantView != null && selectedVariantView != itemView) {
             selectedVariantView.setBackground(null);
         }
-        itemView.setBackgroundResource(R.drawable.bg_filter_thumb_selected);
+        if (itemView != null) {
+            itemView.setBackgroundResource(R.drawable.bg_filter_thumb_selected);
+        }
         selectedVariantView = itemView;
         selectedVariant = variant;
         applyFilterPreview();
@@ -1154,8 +1156,34 @@ public class EditorActivity extends AppCompatActivity {
             for (FilterPreset variant : category.variants) {
                 if (variant.displayName.equalsIgnoreCase(filterName)) {
                     runOnUiThread(() -> {
-                        selectedVariant = variant;
-                        applyColorFilter(variant.matrix, filterIntensity);
+                        if (filterPanel.getVisibility() != View.VISIBLE) {
+                            findViewById(R.id.btnFilter).performClick();
+                        }
+
+                        // Cập nhật UI category nếu cần
+                        int catIndex = -1;
+                        for (int i = 0; i < FilterPreset.CATEGORIES.length; i++) {
+                            if (FilterPreset.CATEGORIES[i] == category) {
+                                catIndex = i;
+                                break;
+                            }
+                        }
+                        if (catIndex != -1 && filterCategoryTabs.getChildCount() > catIndex) {
+                            selectCategory(category, (TextView) filterCategoryTabs.getChildAt(catIndex));
+                        }
+
+                        // Tìm và chọn variant trong list để có highlight UI
+                        View targetItem = null;
+                        for (int i = 0; i < filterVariantsList.getChildCount(); i++) {
+                            View item = filterVariantsList.getChildAt(i);
+                            TextView nameTv = item.findViewById(R.id.filterName);
+                            if (nameTv != null && nameTv.getText().toString().equalsIgnoreCase(filterName)) {
+                                targetItem = item;
+                                break;
+                            }
+                        }
+
+                        selectVariant(variant, targetItem);
                         Toast.makeText(this, "Đã áp dụng: " + filterName, Toast.LENGTH_SHORT).show();
                     });
                     return;
