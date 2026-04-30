@@ -17,14 +17,14 @@ public class GeminiApiClient {
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     public GeminiApiClient(String apiKey) {
-        // Sử dụng gemini-2.0-flash trên endpoint v1 (Stable)
-        // Đây là cấu hình chuẩn nhất để tránh lỗi 404 "Not Found" trên v1beta
+        // Sử dụng gemini-2.0-flash (Bản mới nhất hiện tại)
+        // Lưu ý: gemini-2.5-flash chưa được Google phát hành công khai.
         GenerativeModel gm = new GenerativeModel(
                 "gemini-2.0-flash",
                 apiKey,
                 null, // generationConfig
                 null, // safetySettings
-                new RequestOptions(30000L, "v1"), // Chuyển sang v1
+                new RequestOptions(30000L, "v1"),
                 null, // tools
                 null, // toolConfig
                 null  // systemInstruction
