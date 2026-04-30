@@ -13,7 +13,7 @@ Tài liệu này đóng vai trò là "Implementation Plan" (Lộ trình triển 
 ### Giai đoạn 1: Cài đặt Dependency (Dependencies Setup)
 1. Mở file `app/build.gradle.kts`.
 2. Thêm thư viện ML Kit vào block `dependencies`:
-   ```kotlin
+   ```text
    // Dùng Subject Segmentation (Tách chủ thể tổng quát)
    implementation("com.google.android.gms:play-services-mlkit-subject-segmentation:16.0.0-beta1")
    // HOẶC Selfie Segmentation (Chỉ chuyên tách người)

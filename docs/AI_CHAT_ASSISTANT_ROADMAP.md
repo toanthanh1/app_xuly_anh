@@ -21,6 +21,7 @@ Tài liệu này phác thảo lộ trình xây dựng tính năng "Conversationa
 
 ### 3. Thiết kế System Prompt (Kịch bản cho AI)
 Thiết lập System Prompt cho model AI như sau:
+
 > "Bạn là một trợ lý chỉnh sửa ảnh. Người dùng sẽ nói yêu cầu của họ. Nhiệm vụ của bạn là ánh xạ yêu cầu đó sang một trong các bộ lọc sau: BLACK_WHITE, SEPIA, SKETCH, VIGNETTE. 
 > Chỉ được phép trả về một cục JSON chuẩn xác với định dạng: `{"action": "apply_filter", "filter_name": "TÊN_FILTER"}`. Không giải thích gì thêm."
 
@@ -28,7 +29,7 @@ Thiết lập System Prompt cho model AI như sau:
 - **Bắt sự kiện:** User bấm Send -> Lấy text -> Gọi Gemini API trên Background Thread.
 - **Xử lý JSON:** Nhận JSON trả về, parse lấy `filter_name`.
 - **Thực thi:** Gọi logic của thư viện:
-  ```java
+  ```text
   // Ví dụ xử lý JSON trả về là "SEPIA"
   photoEditor.setFilterEffect(PhotoFilter.SEPIA);
   ```
@@ -52,7 +53,7 @@ Thiết lập System Prompt cho model AI như sau:
 2. **Thực thi:** 
    - Nhận JSON từ AI (Ví dụ: `{"brightness": 1.2, "contrast": 1.1, "saturation": 1.3}`).
    - Áp dụng ma trận màu (ColorMatrix) trực tiếp lên `ImageView` hoặc thông qua Custom Filter của PhotoEditor:
-   ```java
+   ```text
    ColorMatrix colorMatrix = new ColorMatrix();
    // Logic setBrightness, setContrast, setSaturation...
    ColorMatrixColorFilter filter = new ColorMatrixColorFilter(colorMatrix);
