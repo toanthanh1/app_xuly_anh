@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">App_xhinh_anh</string>
+    <string name="undo">Hoàn tác</string>
+    <string name="redo">Làm lại</string>
 </resources>

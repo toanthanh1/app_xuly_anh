@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="ucrop_height_controls_wrapper">120dp</dimen>
+    <dimen name="ucrop_height_wrapper_states">64dp</dimen>
+    <dimen name="ucrop_width_horizontal_wheel_indicator">64dp</dimen>
+    <dimen name="ucrop_margin_horizontal_wheel_indicator">10dp</dimen>
+</resources>
