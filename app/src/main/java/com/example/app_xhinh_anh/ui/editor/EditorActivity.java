@@ -1139,11 +1139,6 @@ public class EditorActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onOpenTool(String toolName) {
-                openAiTool(toolName);
-            }
-
-            @Override
             public void onRemoveBackground() {
                 runOnUiThread(() -> {
                     Toast.makeText(EditorActivity.this, "AI đang thực hiện xóa nền...", Toast.LENGTH_SHORT).show();
