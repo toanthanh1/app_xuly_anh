@@ -1106,7 +1106,7 @@ public class EditorActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(EditorActivity.this, "AI đang thực hiện xóa nền...", Toast.LENGTH_SHORT).show();
                     // Giả lập click vào nút xóa nền để chạy logic có sẵn
-                    findViewById(R.id.btnRemoveBg).performClick();
+                    findViewById(R.id.btnAiRmBg).performClick();
                     
                     // Tự động đóng chat sau khi thực hiện
                     new android.os.Handler().postDelayed(() -> {
@@ -1156,7 +1156,7 @@ public class EditorActivity extends AppCompatActivity {
                         public void onRemoveBackground() {
                             chatAdapter.addMessage(new ChatMessage("Đang thực hiện xóa nền...", false));
                             runOnUiThread(() -> {
-                                findViewById(R.id.btnRemoveBg).performClick();
+                                findViewById(R.id.btnAiRmBg).performClick();
                             });
                         }
 
