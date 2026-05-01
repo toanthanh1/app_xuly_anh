@@ -46,6 +46,14 @@ dependencies {
     implementation(libs.ucrop)
     implementation(libs.photoeditor)
 
+    // ML Kit Subject Segmentation (offline) — dùng cho xóa phông nền
+    implementation(libs.mlkit.segmentation.subject)
+    // ModuleInstallClient để tải model ML Kit khi cần
+    implementation(libs.play.services.base)
+
+    // HTTP client cho ClipDrop CleanUp API (Tẩy AI)
+    implementation(libs.okhttp)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
