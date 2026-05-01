@@ -36,7 +36,7 @@ Nếu bạn thêm bộ lọc mới hoặc muốn AI thông minh hơn, hãy chỉ
 *   **Lưu ý:** Luôn yêu cầu AI trả về định dạng nhất quán để code có thể parse được (ví dụ: định dạng JSON cho các hành động `APPLY_FILTER` hoặc `ADJUST`).
 
 ### Nâng cấp Model
-Trong `GeminiApiClient.java`, bạn có thể thay đổi tên model (ví dụ từ `gemini-2.5-flash` lên các phiên bản cao hơn nếu có) tại phần khởi tạo `GenerativeModel`.
+Trong `GeminiApiClient.java`, bạn có thể thay đổi tên model (ví dụ từ `gemini-1.5-flash` lên các phiên bản cao hơn) tại phần khởi tạo `GenerativeModel`.
 
 ### Xử lý lỗi thường gặp
 *   **Lỗi 404/Not Found:** Kiểm tra lại tên model và endpoint trong `GeminiApiClient`. Hiện tại đang sử dụng endpoint `v1`.
