@@ -11,8 +11,6 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,6 +38,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.processing.tools.BrushManager;
+import com.example.app_xhinh_anh.processing.tools.TextManager;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
@@ -54,9 +53,6 @@ import ja.burhanrashid52.photoeditor.PhotoEditor;
 import ja.burhanrashid52.photoeditor.PhotoEditorView;
 import ja.burhanrashid52.photoeditor.SaveSettings;
 import ja.burhanrashid52.photoeditor.ViewType;
-import ja.burhanrashid52.photoeditor.shape.ArrowPointerLocation;
-import ja.burhanrashid52.photoeditor.shape.ShapeBuilder;
-import ja.burhanrashid52.photoeditor.shape.ShapeType;
 
 public class EditorActivity extends AppCompatActivity {
 
@@ -115,16 +111,9 @@ public class EditorActivity extends AppCompatActivity {
     private View selectedVariantView;
     private int filterIntensity = 100;
 
-    // Brush & Drawing
-    private LinearLayout brushPanel;
-    private SeekBar seekBrushWidth;
-    private View btnChooseColor;
-    private ImageButton btnBrushEraser, btnBrushFree, btnBrushArrow, btnBrushLine, btnBrushRect, btnBrushOval;
-    private LinearLayout colorPickerPanel;
-    private GridLayout colorGrid;
-    private LinearLayout commonColorsLayout;
-    private int currentBrushColor = Color.WHITE;
-    private ShapeType currentShapeType = ShapeType.Brush.INSTANCE;
+    // Managers
+    private BrushManager brushManager;
+    private TextManager textManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -175,7 +164,6 @@ public class EditorActivity extends AppCompatActivity {
                 return;
             }
             
-            // Bake current layers before starting adjustment
             saveBitmapState();
             photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
                 @Override
@@ -480,7 +468,6 @@ public class EditorActivity extends AppCompatActivity {
         }
         hideAllPanels();
         
-        // Bake layers before starting filter
         saveBitmapState();
         photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
             @Override
@@ -729,12 +716,18 @@ public class EditorActivity extends AppCompatActivity {
     private void setupPhotoEditorListener() {
         photoEditor.setOnPhotoEditorListener(new OnPhotoEditorListener() {
             @Override
-            public void onEditTextChangeListener(@Nullable View view, @Nullable String s, int i) {}
+            public void onEditTextChangeListener(@Nullable View view, @Nullable String text, int colorCode) {
+                if (view != null && textManager != null) {
+                    textManager.openTextStylingPanel(view);
+                }
+            }
             @Override public void onAddViewListener(@Nullable ViewType viewType, int i) {}
             @Override public void onRemoveViewListener(@Nullable ViewType viewType, int i) {}
             @Override public void onStartViewChangeListener(@Nullable ViewType viewType) {}
             @Override public void onStopViewChangeListener(@Nullable ViewType viewType) {}
-            @Override public void onTouchSourceImage(@Nullable MotionEvent motionEvent) {}
+            @Override public void onTouchSourceImage(@Nullable MotionEvent motionEvent) {
+                hideAllPanels();
+            }
         });
     }
 
@@ -789,266 +782,37 @@ public class EditorActivity extends AppCompatActivity {
         Button btnFilterReset = findViewById(R.id.btnFilterReset);
         Button btnFilterApply = findViewById(R.id.btnFilterApply);
 
-        // Brush & Drawing views
-        brushPanel = findViewById(R.id.brushPanel);
-        seekBrushWidth = findViewById(R.id.seekBrushWidth);
-        btnChooseColor = findViewById(R.id.btnChooseColor);
-        btnBrushEraser = findViewById(R.id.btnBrushEraser);
-        btnBrushFree = findViewById(R.id.btnBrushFree);
-        btnBrushArrow = findViewById(R.id.btnBrushArrow);
-        btnBrushLine = findViewById(R.id.btnBrushLine);
-        btnBrushRect = findViewById(R.id.btnBrushRect);
-        btnBrushOval = findViewById(R.id.btnBrushOval);
-        colorPickerPanel = findViewById(R.id.colorPickerPanel);
-        colorGrid = findViewById(R.id.colorGrid);
-        commonColorsLayout = findViewById(R.id.commonColors);
-        ImageButton btnBrushClose = findViewById(R.id.btnBrushClose);
-        ImageButton btnBrushDone = findViewById(R.id.btnBrushDone);
+        // Managers
+        brushManager = new BrushManager(this, photoEditor);
+        textManager = new TextManager(this, photoEditor);
 
         setupAdjustControls(btnAdjust, btnAdjustReset, btnAdjustApply);
         setupFilterControls(btnFilterReset, btnFilterApply);
-        setupBrushControls(btnBrush, btnBrushClose, btnBrushDone);
-
-        TextView btnSave = findViewById(R.id.btnSave);
-
-        btnCrop.setOnClickListener(v -> {
-            // Bake current layers before crop
-            SaveSettings saveSettings = new SaveSettings.Builder()
-                    .setClearViewsEnabled(true)
-                    .setTransparencyEnabled(false)
-                    .build();
-            photoEditor.saveAsBitmap(saveSettings, new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
-                @Override
-                public void onBitmapReady(@NonNull Bitmap bitmap) {
-                    File tempFile = new File(getCacheDir(), "crop_source_" + System.currentTimeMillis() + ".jpg");
-                    try (OutputStream out = new java.io.FileOutputStream(tempFile)) {
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                        startCrop(Uri.fromFile(tempFile));
-                    } catch (Exception e) {
-                        Toast.makeText(EditorActivity.this, "Lỗi chuẩn bị ảnh", Toast.LENGTH_SHORT).show();
-                    }
-                }
-                @Override public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(EditorActivity.this, "Lỗi chuẩn bị ảnh", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-
-        btnFlip.setOnClickListener(v -> {
-            saveBitmapState();
-            photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
-                @Override
-                public void onBitmapReady(@NonNull Bitmap bitmap) {
-                    Matrix matrix = new Matrix();
-                    matrix.postScale(-1, 1);
-                    Bitmap flippedBitmap = Bitmap.createBitmap(bitmap, 0, 0,
-                            bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-                    
-                    photoEditor.clearAllViews();
-                    photoEditorView.getSource().setImageBitmap(flippedBitmap);
-                    Toast.makeText(EditorActivity.this, "Đã lật ảnh và vẽ", Toast.LENGTH_SHORT).show();
-                }
-                @Override public void onFailure(@NonNull Exception e) {}
-            });
-        });
-
-        btnFilter.setOnClickListener(v -> openFilterPanel());
-
-        btnUndo.setOnClickListener(v -> {
-            if (!undoBitmapStack.isEmpty()) {
-                photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
-                    @Override
-                    public void onBitmapReady(@NonNull Bitmap bitmap) {
-                        redoBitmapStack.push(copyBitmap(bitmap));
-                        photoEditor.clearAllViews();
-                        photoEditorView.getSource().setImageBitmap(undoBitmapStack.pop());
-                    }
-                    @Override public void onFailure(@NonNull Exception e) {}
-                });
+        
+        findViewById(R.id.btnBrush).setOnClickListener(v -> {
+            if (brushManager.isPanelVisible()) {
+                brushManager.closeBrushPanel();
             } else {
-                photoEditor.undo();
+                hideAllPanels();
+                brushManager.openBrushPanel();
             }
         });
 
-        btnRedo.setOnClickListener(v -> {
-            if (!redoBitmapStack.isEmpty()) {
-                photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
-                    @Override
-                    public void onBitmapReady(@NonNull Bitmap bitmap) {
-                        undoBitmapStack.push(copyBitmap(bitmap));
-                        photoEditor.clearAllViews();
-                        photoEditorView.getSource().setImageBitmap(redoBitmapStack.pop());
-                    }
-                    @Override public void onFailure(@NonNull Exception e) {}
-                });
-            } else {
-                photoEditor.redo();
+        btnAddText.setOnClickListener(v -> {
+            hideAllPanels();
+            if (textManager != null) {
+                textManager.addDefaultText();
             }
         });
 
-        btnAddText.setOnClickListener(v ->
-                photoEditor.addText("Text", ContextCompat.getColor(this, R.color.white)));
-
-        btnSticker.setOnClickListener(v ->
-                Toast.makeText(this, "Tính năng Sticker/Icon sẽ cần thêm bộ icon", Toast.LENGTH_SHORT).show());
-
-        btnSave.setOnClickListener(v -> saveProcessedImage());
+        findViewById(R.id.btnSave).setOnClickListener(v -> saveProcessedImage());
     }
 
     private void hideAllPanels() {
         if (adjustPanel.getVisibility() == View.VISIBLE) closeAdjustPanel(false);
         if (filterPanel.getVisibility() == View.VISIBLE) closeFilterPanel(false);
-        if (brushPanel.getVisibility() == View.VISIBLE) closeBrushPanel();
-    }
-
-    private void setupBrushControls(View btnBrush, View btnClose, View btnDone) {
-        btnBrush.setOnClickListener(v -> {
-            if (brushPanel.getVisibility() == View.VISIBLE) {
-                closeBrushPanel();
-                return;
-            }
-            hideAllPanels();
-            openBrushPanel();
-        });
-
-        seekBrushWidth.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                float size = Math.max(1f, progress);
-                photoEditor.setBrushSize(size);
-                ShapeBuilder sb = new ShapeBuilder()
-                        .withShapeType(currentShapeType)
-                        .withShapeColor(currentBrushColor)
-                        .withShapeSize(size);
-                photoEditor.setShape(sb);
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        btnChooseColor.setOnClickListener(v -> {
-            if (colorPickerPanel.getVisibility() == View.VISIBLE) {
-                colorPickerPanel.setVisibility(View.GONE);
-            } else {
-                showColorPicker();
-            }
-        });
-
-        btnBrushEraser.setOnClickListener(v -> selectBrushTool(ShapeType.Brush.INSTANCE, true));
-        btnBrushFree.setOnClickListener(v -> selectBrushTool(ShapeType.Brush.INSTANCE, false));
-        btnBrushArrow.setOnClickListener(v -> selectBrushTool(new ShapeType.Arrow(), false));
-        btnBrushLine.setOnClickListener(v -> selectBrushTool(ShapeType.Line.INSTANCE, false));
-        btnBrushRect.setOnClickListener(v -> selectBrushTool(ShapeType.Rectangle.INSTANCE, false));
-        btnBrushOval.setOnClickListener(v -> selectBrushTool(ShapeType.Oval.INSTANCE, false));
-
-        btnClose.setOnClickListener(v -> closeBrushPanel());
-        btnDone.setOnClickListener(v -> closeBrushPanel());
-    }
-
-    private void openBrushPanel() {
-        brushPanel.setVisibility(View.VISIBLE);
-        photoEditor.setBrushDrawingMode(true);
-        selectBrushTool(ShapeType.Brush.INSTANCE, false);
-        updateColorPreview();
-    }
-
-    private void closeBrushPanel() {
-        brushPanel.setVisibility(View.GONE);
-        colorPickerPanel.setVisibility(View.GONE);
-        photoEditor.setBrushDrawingMode(false);
-    }
-
-    private void selectBrushTool(ShapeType type, boolean isEraser) {
-        currentShapeType = type;
-        if (isEraser) {
-            photoEditor.brushEraser();
-        } else {
-            photoEditor.setBrushDrawingMode(true);
-            ShapeBuilder sb = new ShapeBuilder()
-                    .withShapeType(type)
-                    .withShapeColor(currentBrushColor)
-                    .withShapeSize(seekBrushWidth.getProgress());
-            photoEditor.setShape(sb);
-        }
-
-        int active = ContextCompat.getColor(this, R.color.brand_green);
-        int inactive = Color.TRANSPARENT;
-        btnBrushEraser.setBackgroundColor(isEraser ? active : inactive);
-        btnBrushFree.setBackgroundColor(!isEraser && type instanceof ShapeType.Brush ? active : inactive);
-        btnBrushArrow.setBackgroundColor(type instanceof ShapeType.Arrow ? active : inactive);
-        btnBrushLine.setBackgroundColor(type instanceof ShapeType.Line ? active : inactive);
-        btnBrushRect.setBackgroundColor(type instanceof ShapeType.Rectangle ? active : inactive);
-        btnBrushOval.setBackgroundColor(type instanceof ShapeType.Oval ? active : inactive);
-    }
-
-    private void showColorPicker() {
-        colorPickerPanel.setVisibility(View.VISIBLE);
-        if (colorGrid.getChildCount() == 0) {
-            int[] hues = {0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330};
-            float[] lights = {0.9f, 0.7f, 0.5f, 0.3f};
-
-            for (int i = 0; i < 12; i++) {
-                float gray = 1.0f - (i / 11.0f);
-                addColorToGrid(Color.rgb((int)(gray*255), (int)(gray*255), (int)(gray*255)));
-            }
-            for (int h : hues) {
-                for (float l : lights) {
-                    addColorToGrid(Color.HSVToColor(new float[]{h, 1.0f, l}));
-                }
-            }
-
-            int[] common = {0xFF2196F3, 0xFFF44336, 0xFFFFC107, 0xFF4CAF50, 0xFF3F51B5, 0xFF9C27B0, 0xFF000000};
-            for (int color : common) {
-                View view = new View(this);
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        Math.round(36 * getResources().getDisplayMetrics().density),
-                        Math.round(36 * getResources().getDisplayMetrics().density));
-                params.setMargins(0, 0, 12, 0);
-                view.setLayoutParams(params);
-                GradientDrawable shape = new GradientDrawable();
-                shape.setShape(GradientDrawable.OVAL);
-                shape.setColor(color);
-                shape.setStroke(2, Color.GRAY);
-                view.setBackground(shape);
-                view.setOnClickListener(v -> onColorSelected(color));
-                commonColorsLayout.addView(view);
-            }
-        }
-    }
-
-    private void addColorToGrid(int color) {
-        View view = new View(this);
-        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-        params.width = 0;
-        params.height = Math.round(32 * getResources().getDisplayMetrics().density);
-        params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-        params.setMargins(2, 2, 2, 2);
-        view.setLayoutParams(params);
-        view.setBackgroundColor(color);
-        view.setOnClickListener(v -> onColorSelected(color));
-        colorGrid.addView(view);
-    }
-
-    private void onColorSelected(int color) {
-        currentBrushColor = color;
-        ShapeBuilder sb = new ShapeBuilder()
-                .withShapeType(currentShapeType)
-                .withShapeColor(color)
-                .withShapeSize(seekBrushWidth.getProgress());
-        photoEditor.setShape(sb);
-        updateColorPreview();
-        colorPickerPanel.setVisibility(View.GONE);
-    }
-
-    private void updateColorPreview() {
-        LayerDrawable layerDrawable = (LayerDrawable) ContextCompat.getDrawable(this, R.drawable.bg_color_picker_button);
-        if (layerDrawable != null) {
-            GradientDrawable colorCircle = (GradientDrawable) layerDrawable.findDrawableByLayerId(R.id.color_circle);
-            if (colorCircle != null) {
-                colorCircle.setColor(currentBrushColor);
-                btnChooseColor.setBackground(layerDrawable);
-            }
-        }
+        if (brushManager != null && brushManager.isPanelVisible()) brushManager.closeBrushPanel();
+        if (textManager != null && textManager.isPanelVisible()) textManager.hideStylingPanel();
     }
 
     private void saveProcessedImage() {
@@ -1121,7 +885,7 @@ public class EditorActivity extends AppCompatActivity {
         UCrop.Options options = new UCrop.Options();
         int brandColor = ContextCompat.getColor(this, R.color.brand_green);
         int whiteColor = ContextCompat.getColor(this, R.color.white);
-        
+
         options.setToolbarColor(brandColor);
         options.setToolbarWidgetColor(whiteColor);
         options.setActiveControlsWidgetColor(brandColor);

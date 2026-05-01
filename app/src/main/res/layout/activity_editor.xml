@@ -502,6 +502,168 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- New Text Styling Panel -->
+        <LinearLayout
+            android:id="@+id/textStylingPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#222222"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="100dp">
+
+                <!-- Text Color Tab -->
+                <LinearLayout
+                    android:id="@+id/textPanelColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvTextColors"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </LinearLayout>
+
+                <!-- Background Color Tab -->
+                <LinearLayout
+                    android:id="@+id/textPanelBackground"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvTextBgColors"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </LinearLayout>
+
+                <!-- Font Tab -->
+                <LinearLayout
+                    android:id="@+id/textPanelFont"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:paddingTop="8dp">
+                        <TextView
+                            android:id="@+id/btnStyleBold"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:text="B"
+                            android:textStyle="bold"
+                            android:textColor="@color/white"
+                            android:gravity="center"
+                            android:textSize="18sp"
+                            android:background="?attr/selectableItemBackground" />
+                        <TextView
+                            android:id="@+id/btnStyleItalic"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:text="I"
+                            android:textStyle="italic"
+                            android:textColor="@color/white"
+                            android:gravity="center"
+                            android:textSize="18sp"
+                            android:layout_marginHorizontal="16dp"
+                            android:background="?attr/selectableItemBackground" />
+                        <TextView
+                            android:id="@+id/btnStyleUnderline"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:text="U"
+                            android:textColor="@color/white"
+                            android:gravity="center"
+                            android:textSize="18sp"
+                            android:background="?attr/selectableItemBackground" />
+                    </LinearLayout>
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scrollbars="none">
+                        <LinearLayout
+                            android:id="@+id/textFontList"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:paddingHorizontal="16dp"/>
+                    </HorizontalScrollView>
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- Bottom Tabs Bar for Styling -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="#111111"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageButton
+                    android:id="@+id/btnTextStylingClose"
+                    android:layout_width="60dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_close"
+                    app:tint="#888888" />
+
+                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+
+                <ImageButton
+                    android:id="@+id/tabTextBtnColor"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_palette"
+                    app:tint="@color/brand_green" />
+
+                <ImageButton
+                    android:id="@+id/tabTextBtnBackground"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_circle"
+                    app:tint="#888888" />
+
+                <ImageButton
+                    android:id="@+id/tabTextBtnFont"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_font"
+                    app:tint="#888888" />
+
+                <ImageButton
+                    android:id="@+id/btnTextEditContent"
+                    android:layout_width="56dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_text"
+                    app:tint="#888888" />
+
+                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+
+                <ImageButton
+                    android:id="@+id/btnTextStylingDone"
+                    android:layout_width="60dp"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_done"
+                    app:tint="#888888" />
+            </LinearLayout>
+        </LinearLayout>
+
         <include layout="@layout/layout_brush_panel" />
         <include layout="@layout/layout_color_picker" />
 
