@@ -173,6 +173,15 @@ public class EditorActivity extends AppCompatActivity {
         });
 
         initViews();
+
+        etChatInput.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && chatAdapter != null && chatAdapter.getItemCount() > 0) {
+                rvChatHistory.postDelayed(() -> {
+                    rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                }, 300);
+            }
+        });
+
         String imageUriString = getIntent().getStringExtra("image_uri");
         if (imageUriString != null) {
             currentImageUri = Uri.parse(imageUriString);
@@ -227,7 +236,7 @@ public class EditorActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 int value = progress - 50;
                 adjustValueText.setText(String.valueOf(value));
-                if (!fromUser || adjustBaseBitmap == null) return;
+                if (adjustBaseBitmap == null) return;
                 switch (currentAdjustMode) {
                     case MODE_CONTRAST: contrastValue = value; break;
                     case MODE_SATURATION: saturationValue = value; break;
@@ -490,7 +499,7 @@ public class EditorActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 filterIntensity = progress;
                 filterIntensityValueText.setText(String.valueOf(progress));
-                if (fromUser) applyFilterPreview();
+                applyFilterPreview();
             }
             @Override public void onStartTrackingTouch(SeekBar sb) {}
             @Override public void onStopTrackingTouch(SeekBar sb) {}
@@ -1185,18 +1194,21 @@ public class EditorActivity extends AppCompatActivity {
                         public void onApplyFilter(String filterName) {
                             chatAdapter.addMessage(new ChatMessage("Đang áp dụng bộ lọc: " + filterName, false));
                             applyAiFilter(filterName);
+                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onAdjustProperty(String property, int value) {
                             chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
                             applyAiAdjustment(property, value);
+                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onOpenTool(String toolName) {
                             chatAdapter.addMessage(new ChatMessage("Đang mở công cụ: " + toolName, false));
                             openAiTool(toolName);
+                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
@@ -1205,14 +1217,15 @@ public class EditorActivity extends AppCompatActivity {
                             runOnUiThread(() -> {
                                 findViewById(R.id.btnAiRmBg).performClick();
                             });
+                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onMessage(String msg) {
                             chatAdapter.addMessage(new ChatMessage(msg, false));
+                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
                     });
-                    rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                 });
             }
 
@@ -1296,20 +1309,44 @@ public class EditorActivity extends AppCompatActivity {
                 if (adjustPanel.getVisibility() != View.VISIBLE) {
                     findViewById(R.id.btnAdjust).performClick();
                 }
-                selectAdjustMode(targetMode);
-                // AI trả về -100 đến 100, SeekBar là 0-100 (tương ứng -100 to 100 nếu logic app bạn vậy)
-                // Hoặc nếu SeekBar 0-100 là giá trị tuyệt đối, ta map value AI vào.
-                // Giả sử logic hiện tại của bạn là seek 50 = 0.
-                seekAdjust.setProgress(value + 50);
                 
+                // Chọn mode trước
+                selectAdjustMode(targetMode);
+                
+                // Sau đó mới đặt giá trị (để tránh bị selectAdjustMode reset về 0)
+                // Map value từ AI (-100 đến 100) sang SeekBar (0-100)
+                int progress = value + 50; 
+                if (progress < 0) progress = 0;
+                if (progress > 100) progress = 100;
+                
+                seekAdjust.setProgress(progress);
+                
+                // Cập nhật giá trị biến tương ứng trực tiếp để chắc chắn
+                int val = progress - 50;
+                switch (targetMode) {
+                    case MODE_CONTRAST: contrastValue = val; break;
+                    case MODE_SATURATION: saturationValue = val; break;
+                    case MODE_SHARPNESS: sharpnessValue = val; break;
+                    case MODE_CLARITY: clarityValue = val; break;
+                    case MODE_HSL: hslValue = val; break;
+                    case MODE_HIGHLIGHTS: highlightsValue = val; break;
+                    case MODE_SHADOWS: shadowsValue = val; break;
+                    default: brightnessValue = val;
+                }
+
                 applyColorAdjustments();
+                if (isHeavyMode(targetMode)) {
+                    rebuildConvolutionBitmap();
+                }
+
+                Toast.makeText(this, "AI: Đã chỉnh " + property + " " + value + "%", Toast.LENGTH_SHORT).show();
 
                 new android.os.Handler().postDelayed(() -> {
                     if (adjustPanel.getVisibility() == View.VISIBLE) {
                         bakeAdjustments();
                         adjustPanel.setVisibility(View.GONE);
                     }
-                }, 1500);
+                }, 2000);
             });
         }
     }
