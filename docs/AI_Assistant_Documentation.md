@@ -19,7 +19,7 @@ Tính năng AI Assistant cho phép người dùng tương tác với trí tuệ 
 Tính năng được đặt trong package: `com.example.app_xhinh_anh.features.ai_assistant`
 
 *   **`ui/AiAssistantActivity.java`**: Quản lý giao diện chat, xử lý sự kiện gửi tin và hiển thị kết quả.
-*   **`data/GeminiApiClient.java`**: Lớp giao tiếp trực tiếp với Google Generative AI SDK. Sử dụng model `gemini-2.0-flash` (hoặc bản mới hơn).
+*   **`data/GeminiApiClient.java`**: Lớp giao tiếp trực tiếp với Google Generative AI SDK. Sử dụng model `gemini-2.5-flash` (hoặc bản mới hơn).
 *   **`domain/PromptProvider.java`**: Chứa "System Prompt" - tập hợp các quy tắc định hướng để AI hiểu các bộ lọc của ứng dụng (như Snow White, Vivid, Neon Fire...).
 *   **`ui/adapter/ChatAdapter.java`**: Adapter hiển thị danh sách tin nhắn trong RecyclerView.
 

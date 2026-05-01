@@ -17,14 +17,13 @@ public class GeminiApiClient {
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     public GeminiApiClient(String apiKey) {
-        // Sử dụng gemini-2.0-flash trên endpoint v1 (Stable)
-        // Đây là cấu hình chuẩn nhất để tránh lỗi 404 "Not Found" trên v1beta
+        // Sử dụng gemini-2.5-flash theo yêu cầu của bạn
         GenerativeModel gm = new GenerativeModel(
                 "gemini-2.5-flash",
                 apiKey,
                 null, // generationConfig
                 null, // safetySettings
-                new RequestOptions(30000L, "v1"), // Chuyển sang v1
+                new RequestOptions(30000L, "v1"),
                 null, // tools
                 null, // toolConfig
                 null  // systemInstruction
@@ -38,7 +37,6 @@ public class GeminiApiClient {
     }
 
     public void sendMessage(String userPrompt, AiCallback callback) {
-        // Kết hợp System Prompt vào nội dung gửi đi để đảm bảo tính tương thích
         String fullPrompt = PromptProvider.getSystemPrompt() + "\n\nNgười dùng: " + userPrompt;
         
         Content userContent = new Content.Builder()

@@ -11,8 +11,9 @@ public class PromptProvider {
                 "   - Nhóm HITS: [Roman Holiday, Neon Fire, Summer Soda...] -> Hiện đại, tươi mới, lung linh. " +
                 "   - Nhóm PORTRAIT: [Vivid, HD Dark, Snow White, Glow...] -> Làm đẹp da, sáng mặt, đa dạng tông màu. " +
                 "   - Nhóm TEXTURE: [Punchy, Matte, Crisp] -> Sắc nét, nhấn mạnh chi tiết. " +
-                "2. ADJUST: Chỉnh [BRIGHTNESS, CONTRAST, SATURATION]. " +
-                "MẪU: {\"action\": \"APPLY_FILTER\", \"filter_name\": \"Snow White\"} " +
+                "2. ADJUST: Chỉnh [brightness, contrast, saturation]. " +
+                "MẪU 1: {\"action\": \"APPLY_FILTER\", \"filter_name\": \"Snow White\"} " +
+                "MẪU 2: {\"action\": \"ADJUST\", \"property\": \"brightness\", \"value\": 20} " +
                 "Nếu là trò chuyện: {\"action\": \"MESSAGE\", \"message\": \"...\"}";
     }
 }

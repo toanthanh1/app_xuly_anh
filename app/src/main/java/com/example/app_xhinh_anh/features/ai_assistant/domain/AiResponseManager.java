@@ -12,51 +12,87 @@ public class AiResponseManager {
     }
 
     /**
-     * TỐI ƯU ĐẦU VÀO: Phản ứng tức thì với các lệnh phổ biến
+     * TỐI ƯU ĐẦU VÀO: Phản hồi tức thì dựa trên từ khóa quan trọng.
+     * Không sử dụng Regex phức tạp để đảm bảo tốc độ xử lý local cao nhất.
      */
     public static boolean handleLocalInput(String input, ResponseCallback callback) {
-        if (input == null) return false;
-        String lowerInput = input.toLowerCase().trim();
+        if (input == null || input.isEmpty()) return false;
+        String s = input.toLowerCase().trim();
         
-        // Chào hỏi - Phản hồi cực nhanh
-        if (lowerInput.equals("hi") || lowerInput.equals("hello") || lowerInput.equals("xin chào") || lowerInput.equals("chào")) {
-            callback.onMessage("Xin chào! Bạn cần tôi giúp gì cho bức ảnh này không? (Ví dụ: 'Làm trắng da', 'Chỉnh ảnh hoài cổ')");
+        // 1. Chào hỏi linh hoạt (Chỉ cần chứa từ chào, hi, hello)
+        if (s.contains("chào") || s.contains("hi") || s.contains("hello") || s.contains("helo")) {
+            callback.onMessage("Xin chào! Tôi có thể giúp bạn:\n✨ Làm trắng da\n📜 Áp dụng bộ lọc Hoài cổ\n☀️ Chỉnh ảnh tươi sáng hơn");
             return true;
         }
 
-        // Lệnh làm trắng
-        if (lowerInput.contains("làm trắng") || lowerInput.contains("trắng da") || lowerInput.contains("sáng da")) {
-            callback.onMessage("✨ Đang làm trắng da cho bạn...");
+        // 2. Lệnh làm trắng/sáng da (Linh hoạt theo từ khóa)
+        if (s.contains("trắng") || s.contains("sáng da")) {
+            callback.onMessage("✨ Đang kích hoạt chế độ làm đẹp da (Snow White)...");
             callback.onApplyFilter("Snow White");
             return true;
         }
 
-        // Lệnh hoài cổ
-        if (lowerInput.contains("hoài cổ") || lowerInput.contains("ảnh cũ") || lowerInput.contains("retro")) {
-            callback.onMessage("📜 Đang áp dụng phong cách hoài cổ...");
+        // 3. Lệnh hoài cổ/retro/sepia/cũ
+        if (s.contains("hoài cổ") || s.contains("retro") || s.contains("cũ") || s.contains("sepia")) {
+            callback.onMessage("📜 Đang áp dụng phong cách hoài cổ (Sepia)...");
             callback.onApplyFilter("Sepia");
             return true;
         }
+        
+        // 4. Lệnh rực rỡ/sáng hơn
+        if (s.contains("tươi sáng") || s.contains("sáng hơn") || s.contains("vivid")) {
+            callback.onMessage("☀️ Đang làm bức ảnh tươi sáng hơn...");
+            callback.onApplyFilter("Vivid");
+            return true;
+        }
 
-        return false;
+        // 5. Tăng/Giảm độ sáng (Brightness)
+        if (s.contains("tăng sáng") || s.contains("thêm sáng") || s.contains("sáng thêm")) {
+            callback.onMessage("☀️ Đã tăng độ sáng thêm 20%");
+            callback.onAdjust("brightness", 20);
+            return true;
+        }
+        if (s.contains("giảm sáng") || s.contains("tối đi")) {
+            callback.onMessage("🌙 Đã giảm độ sáng đi 20%");
+            callback.onAdjust("brightness", -20);
+            return true;
+        }
+
+        // 6. Tăng/Giảm tương phản (Contrast)
+        if (s.contains("tăng tương phản") || s.contains("đậm hơn")) {
+            callback.onMessage("🎨 Đã tăng độ tương phản");
+            callback.onAdjust("contrast", 20);
+            return true;
+        }
+        if (s.contains("giảm tương phản") || s.contains("nhạt hơn")) {
+            callback.onMessage("🌫️ Đã giảm độ tương phản");
+            callback.onAdjust("contrast", -20);
+            return true;
+        }
+
+        return false; // Nếu không khớp từ khóa local thì mới gửi lên AI xử lý
     }
 
     /**
-     * TỐI ƯU ĐẦU RA: Xử lý chuỗi JSON từ AI một cách gọn gàng
+     * TỐI ƯU ĐẦU RA: Parse JSON cực nhanh và làm sạch text.
      */
     public static void parseResponse(String rawResponse, ResponseCallback callback) {
         try {
-            // Loại bỏ các ký tự thừa từ AI (như markdown ```json)
-            String clean = rawResponse.replace("```json", "").replace("```", "").trim();
+            // Loại bỏ markdown nếu AI trả về định dạng code block
+            String clean = rawResponse.replaceAll("(?s)```json(.*?)```", "$1").replaceAll("```", "").trim();
             
             if (clean.startsWith("{")) {
                 JSONObject json = new JSONObject(clean);
                 String action = json.optString("action", "");
-
                 if ("APPLY_FILTER".equals(action)) {
                     String filter = json.optString("filter_name", "");
-                    callback.onMessage("✅ Đã chọn bộ lọc: " + filter);
                     callback.onApplyFilter(filter);
+                    callback.onMessage("✅ Đã chọn bộ lọc: " + filter);
+                } else if ("ADJUST".equals(action)) {
+                    String property = json.optString("property", "");
+                    int value = json.optInt("value", 0);
+                    callback.onAdjust(property, value);
+                    callback.onMessage("✅ Đã chỉnh " + property + " thành " + value);
                 } else if ("MESSAGE".equals(action)) {
                     callback.onMessage(json.optString("message", ""));
                 } else {

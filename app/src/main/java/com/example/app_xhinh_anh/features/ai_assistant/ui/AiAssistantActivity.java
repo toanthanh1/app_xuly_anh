@@ -35,7 +35,7 @@ public class AiAssistantActivity extends AppCompatActivity {
         public void onMessage(String text) {
             runOnUiThread(() -> {
                 chatAdapter.addMessage(new ChatMessage(text, false));
-                rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                rvChatHistory.scrollToPosition(chatAdapter.getItemCount() - 1);
             });
         }
 
@@ -46,13 +46,19 @@ public class AiAssistantActivity extends AppCompatActivity {
             resultIntent.putExtra("filter_name", filterName);
             setResult(RESULT_OK, resultIntent);
             
-            // TỰ ĐỘNG THOÁT: Để người dùng thấy kết quả trên ảnh ngay lập tức
-            new android.os.Handler().postDelayed(() -> finish(), 1500);
+            // TỰ ĐỘNG THOÁT: Giảm xuống còn 1 giây để phản ứng nhanh hơn
+            new android.os.Handler().postDelayed(() -> finish(), 1000);
         }
 
         @Override
         public void onAdjust(String property, int value) {
-            // Xử lý điều chỉnh thông số nếu cần
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("action", "ADJUST");
+            resultIntent.putExtra("property", property);
+            resultIntent.putExtra("value", value);
+            setResult(RESULT_OK, resultIntent);
+
+            new android.os.Handler().postDelayed(() -> finish(), 1000);
         }
 
         @Override
@@ -73,9 +79,7 @@ public class AiAssistantActivity extends AppCompatActivity {
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         toolbar.setNavigationOnClickListener(v -> finish());
     }
 
@@ -93,7 +97,7 @@ public class AiAssistantActivity extends AppCompatActivity {
         geminiApiClient = new GeminiApiClient(BuildConfig.GEMINI_API_KEY);
 
         if (chatAdapter.getItemCount() == 0) {
-            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Tôi có thể giúp:\n✨ 'Làm trắng da'\n🎨 'Bộ lọc Hoài cổ'\nHoặc đặt câu hỏi bất kỳ.", false));
+            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Bạn muốn chỉnh ảnh thế nào?\n(Ví dụ: 'Làm trắng da', 'Hoài cổ')", false));
         }
 
         btnSendChat.setOnClickListener(v -> {
@@ -116,9 +120,9 @@ public class AiAssistantActivity extends AppCompatActivity {
     private void processMessage(String message) {
         chatAdapter.addMessage(new ChatMessage(message, true));
         etChatInput.setText("");
-        rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+        // Dùng scrollToPosition thay vì smoothScroll để cảm giác "tức thì" hơn
+        rvChatHistory.scrollToPosition(chatAdapter.getItemCount() - 1);
 
-        // Kiểm tra lệnh cục bộ để phản hồi tức thì
         if (AiResponseManager.handleLocalInput(message, aiCallback)) {
             return;
         }

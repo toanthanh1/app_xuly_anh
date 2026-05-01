@@ -1065,9 +1065,14 @@ public class EditorActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && data != null) {
             if (requestCode == 1001) {
-                String aiResponse = data.getStringExtra("ai_response");
-                if (aiResponse != null) {
-                    processAiAction(aiResponse);
+                String action = data.getStringExtra("action");
+                if ("APPLY_FILTER".equals(action)) {
+                    String filterName = data.getStringExtra("filter_name");
+                    applyAiFilter(filterName);
+                } else if ("ADJUST".equals(action)) {
+                    String property = data.getStringExtra("property");
+                    int value = data.getIntExtra("value", 0);
+                    applyAiAdjustment(property, value);
                 }
             } else if (requestCode == UCrop.REQUEST_CROP) {
                 final Uri resultUri = UCrop.getOutput(data);
@@ -1185,6 +1190,13 @@ public class EditorActivity extends AppCompatActivity {
 
                         selectVariant(variant, targetItem);
                         Toast.makeText(this, "Đã áp dụng: " + filterName, Toast.LENGTH_SHORT).show();
+
+                        // Tự động đóng Filter Panel sau 1 giây
+                        new android.os.Handler().postDelayed(() -> {
+                            if (filterPanel.getVisibility() == View.VISIBLE) {
+                                closeFilterPanel();
+                            }
+                        }, 1000);
                     });
                     return;
                 }
@@ -1211,7 +1223,14 @@ public class EditorActivity extends AppCompatActivity {
                     findViewById(R.id.btnAdjust).performClick();
                 }
                 selectAdjustMode(targetMode);
-                seekAdjust.setProgress(value);
+                seekAdjust.setProgress(value + 50);
+                
+                // Tự động Apply sau khi chỉnh AI để người dùng thấy kết quả ngay
+                new android.os.Handler().postDelayed(() -> {
+                    if (adjustPanel.getVisibility() == View.VISIBLE) {
+                        findViewById(R.id.btnAdjustApply).performClick();
+                    }
+                }, 800);
             });
         }
     }
