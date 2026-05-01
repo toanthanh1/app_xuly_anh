@@ -6,6 +6,7 @@ public class ActionMapper {
     public interface ActionListener {
         void onApplyFilter(String filterName);
         void onAdjustProperty(String property, int value);
+        void onRemoveBackground();
         void onMessage(String message);
     }
 
@@ -22,6 +23,9 @@ public class ActionMapper {
                     break;
                 case "ADJUST":
                     listener.onAdjustProperty(json.optString("property"), json.optInt("value", 50));
+                    break;
+                case "REMOVE_BACKGROUND":
+                    listener.onRemoveBackground();
                     break;
                 case "MESSAGE":
                 default:

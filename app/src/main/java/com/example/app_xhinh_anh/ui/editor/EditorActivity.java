@@ -1102,9 +1102,26 @@ public class EditorActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onRemoveBackground() {
+                runOnUiThread(() -> {
+                    Toast.makeText(EditorActivity.this, "AI đang thực hiện xóa nền...", Toast.LENGTH_SHORT).show();
+                    // Giả lập click vào nút xóa nền để chạy logic có sẵn
+                    findViewById(R.id.btnRemoveBg).performClick();
+                    
+                    // Tự động đóng chat sau khi thực hiện
+                    new android.os.Handler().postDelayed(() -> {
+                        if (chatPanel.getVisibility() == View.VISIBLE) {
+                            chatPanel.setVisibility(View.GONE);
+                        }
+                    }, 2000);
+                });
+            }
+
+            @Override
             public void onMessage(String message) {
-                // Có thể hiển thị Toast hoặc một thông báo nhỏ
-                Toast.makeText(EditorActivity.this, message, Toast.LENGTH_SHORT).show();
+                // Hiển thị tin nhắn tư vấn từ AI vào giao diện chat
+                chatAdapter.addMessage(new com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage(message, false));
+                rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
             }
         });
     }
@@ -1133,6 +1150,14 @@ public class EditorActivity extends AppCompatActivity {
                             // Thêm tin nhắn xác nhận
                             chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
                             applyAiAdjustment(property, value);
+                        }
+
+                        @Override
+                        public void onRemoveBackground() {
+                            chatAdapter.addMessage(new ChatMessage("Đang thực hiện xóa nền...", false));
+                            runOnUiThread(() -> {
+                                findViewById(R.id.btnRemoveBg).performClick();
+                            });
                         }
 
                         @Override
@@ -1189,15 +1214,15 @@ public class EditorActivity extends AppCompatActivity {
                         }
 
                         selectVariant(variant, targetItem);
-                        Toast.makeText(this, "Đã áp dụng: " + filterName, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "AI: Đã áp dụng bộ lọc " + filterName, Toast.LENGTH_SHORT).show();
 
-                        // Tự động lưu và đóng Filter Panel sau 1.2 giây để người dùng thấy kết quả
+                        // Tự động lưu (Bake) và đóng Filter Panel sau khi AI làm xong
                         new android.os.Handler().postDelayed(() -> {
                             if (filterPanel.getVisibility() == View.VISIBLE) {
-                                bakeFilter(); // Quan trọng: Phải bake để áp dụng vĩnh viễn vào ảnh
+                                bakeFilter(); // Lưu hiệu ứng vào ảnh gốc
                                 closeFilterPanel();
                             }
-                        }, 1200);
+                        }, 1500);
                     });
                     return;
                 }
@@ -1214,7 +1239,10 @@ public class EditorActivity extends AppCompatActivity {
             case "BRIGHTNESS": mode = MODE_BRIGHTNESS; break;
             case "CONTRAST": mode = MODE_CONTRAST; break;
             case "SATURATION": mode = MODE_SATURATION; break;
-            // Add more mappings
+            case "SHARPNESS": mode = MODE_SHARPNESS; break;
+            case "CLARITY": mode = MODE_CLARITY; break;
+            case "HIGHLIGHTS": mode = MODE_HIGHLIGHTS; break;
+            case "SHADOWS": mode = MODE_SHADOWS; break;
         }
 
         if (mode != -1) {
@@ -1226,12 +1254,16 @@ public class EditorActivity extends AppCompatActivity {
                 selectAdjustMode(targetMode);
                 seekAdjust.setProgress(value + 50);
                 
-                // Tự động Apply sau khi chỉnh AI để người dùng thấy kết quả ngay
+                // Cập nhật giá trị hiển thị trên UI ngay lập tức
+                applyColorAdjustments();
+
+                // Tự động nhấn nút "Apply" sau khi chỉnh AI để lưu lại kết quả
                 new android.os.Handler().postDelayed(() -> {
                     if (adjustPanel.getVisibility() == View.VISIBLE) {
-                        findViewById(R.id.btnAdjustApply).performClick();
+                        bakeAdjustments(); // Gọi hàm lưu của công cụ Adjust
+                        adjustPanel.setVisibility(View.GONE);
                     }
-                }, 800);
+                }, 1500);
             });
         }
     }
