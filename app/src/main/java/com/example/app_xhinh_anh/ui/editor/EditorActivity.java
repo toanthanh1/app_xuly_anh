@@ -1054,9 +1054,46 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void setupAiAssistant() {
+        chatPanel = findViewById(R.id.chatPanel);
+        rvChatHistory = findViewById(R.id.rvChatHistory);
+        etChatInput = findViewById(R.id.etChatInput);
+        btnSendChat = findViewById(R.id.btnSendChat);
+        pbAiThinking = findViewById(R.id.pbAiThinking);
+
+        geminiApiClient = new GeminiApiClient(com.example.app_xhinh_anh.BuildConfig.GEMINI_API_KEY);
+        
+        chatAdapter = new ChatAdapter();
+        rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
+        rvChatHistory.setAdapter(chatAdapter);
+
+        // Tin nhắn hướng dẫn chi tiết ban đầu
+        String guideMessage = "Chào bạn! Tôi là Trợ lý AI. Tôi có thể giúp bạn:\n\n" +
+                "🎨 **Bộ lọc**: \"Áp dụng bộ lọc Polaroid\", \"Làm ảnh cũ đi\", \"Chỉnh màu Neon\"...\n\n" +
+                "🛠️ **Công cụ**: \"Xóa nền ảnh này\", \"Mở đồ thị Curves\", \"Chỉnh HSL\"...\n\n" +
+                "✨ **Căn chỉnh**: \"Tăng độ sáng lên 20%\", \"Làm ảnh sắc nét hơn\", \"Giảm tương phản\"...\n\n" +
+                "Bạn muốn tôi giúp gì cho bức ảnh này?";
+        chatAdapter.addMessage(new ChatMessage(guideMessage, false));
+
         findViewById(R.id.btnAiAssistant).setOnClickListener(v -> {
-            Intent intent = new Intent(this, AiAssistantActivity.class);
-            startActivityForResult(intent, 1001);
+            if (chatPanel.getVisibility() == View.VISIBLE) {
+                chatPanel.setVisibility(View.GONE);
+            } else {
+                hideAllPanels();
+                chatPanel.setVisibility(View.VISIBLE);
+                if (chatAdapter.getItemCount() <= 1) {
+                    rvChatHistory.smoothScrollToPosition(0);
+                }
+            }
+        });
+
+        btnSendChat.setOnClickListener(v -> {
+            String msg = etChatInput.getText().toString().trim();
+            if (!msg.isEmpty()) {
+                sendChatMessage(msg);
+                // Hide keyboard
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(etChatInput.getWindowToken(), 0);
+            }
         });
     }
 

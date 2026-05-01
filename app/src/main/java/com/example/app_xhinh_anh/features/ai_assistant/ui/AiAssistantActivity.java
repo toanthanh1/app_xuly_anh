@@ -97,7 +97,22 @@ public class AiAssistantActivity extends AppCompatActivity {
         geminiApiClient = new GeminiApiClient(BuildConfig.GEMINI_API_KEY);
 
         if (chatAdapter.getItemCount() == 0) {
-            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Bạn muốn chỉnh ảnh thế nào?\n(Ví dụ: 'Làm trắng da', 'Hoài cổ')", false));
+            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Tôi là Trợ lý AI của App Xhinh Anh. Tôi có thể giúp bạn chỉnh sửa ảnh nhanh chóng bằng giọng nói hoặc văn bản.\n\n" +
+                    "💡 **Bạn có thể thử các câu lệnh sau:**\n\n" +
+                    "🎨 **Áp dụng bộ lọc nhanh:**\n" +
+                    "• \"Làm trắng da cho ảnh này\"\n" +
+                    "• \"Chỉnh ảnh theo phong cách hoài cổ Polaroid\"\n" +
+                    "• \"Dùng bộ lọc Neon Fire cho rực rỡ\"\n\n" +
+                    "⚙️ **Điều chỉnh thông số (từ -100 đến 100):**\n" +
+                    "• \"Tăng độ sáng ảnh lên 30%\"\n" +
+                    "• \"Giảm độ bão hòa màu một chút\"\n" +
+                    "• \"Làm ảnh sắc nét hơn (sharpness)\"\n\n" +
+                    "✂️ **Công cụ thông minh:**\n" +
+                    "• \"Hãy xóa nền cho bức ảnh này giúp tôi\"\n" +
+                    "• \"Mở công cụ Curves để tôi tự chỉnh màu\"\n" +
+                    "• \"Tôi muốn dùng bảng màu HSL\"\n\n" +
+                    "💬 **Tư vấn:** \"Ảnh này hơi tối và mờ, tôi nên làm gì?\"\n\n" +
+                    "Bạn muốn thay đổi điều gì cho bức ảnh này?", false));
         }
 
         btnSendChat.setOnClickListener(v -> {
