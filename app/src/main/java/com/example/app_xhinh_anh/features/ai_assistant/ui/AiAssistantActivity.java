@@ -1,8 +1,10 @@
 package com.example.app_xhinh_anh.features.ai_assistant.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -28,7 +30,6 @@ public class AiAssistantActivity extends AppCompatActivity {
     private ProgressBar pbAiThinking;
     private GeminiApiClient geminiApiClient;
 
-    // Callback xử lý phản hồi tập trung
     private final AiResponseManager.ResponseCallback aiCallback = new AiResponseManager.ResponseCallback() {
         @Override
         public void onMessage(String text) {
@@ -40,17 +41,18 @@ public class AiAssistantActivity extends AppCompatActivity {
 
         @Override
         public void onApplyFilter(String filterName) {
-            // Gửi lệnh về EditorActivity
             Intent resultIntent = new Intent();
             resultIntent.putExtra("action", "APPLY_FILTER");
             resultIntent.putExtra("filter_name", filterName);
             setResult(RESULT_OK, resultIntent);
-            // Có thể thêm thông báo hoặc đóng chat tùy UX
+            
+            // TỰ ĐỘNG THOÁT: Để người dùng thấy kết quả trên ảnh ngay lập tức
+            new android.os.Handler().postDelayed(() -> finish(), 1500);
         }
 
         @Override
         public void onAdjust(String property, int value) {
-            // Logic điều chỉnh thông số (Brightness, Contrast...)
+            // Xử lý điều chỉnh thông số nếu cần
         }
 
         @Override
@@ -63,7 +65,6 @@ public class AiAssistantActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ai_assistant);
-
         setupToolbar();
         initViews();
         setupChat();
@@ -74,7 +75,6 @@ public class AiAssistantActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
         toolbar.setNavigationOnClickListener(v -> finish());
     }
@@ -90,47 +90,45 @@ public class AiAssistantActivity extends AppCompatActivity {
         chatAdapter = new ChatAdapter();
         rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         rvChatHistory.setAdapter(chatAdapter);
-
         geminiApiClient = new GeminiApiClient(BuildConfig.GEMINI_API_KEY);
 
-        // ĐẦU VÀO: Hướng dẫn ngắn gọn cho người dùng khi bắt đầu
         if (chatAdapter.getItemCount() == 0) {
-            String welcomeMsg = "👋 Chào bạn! Tôi là Trợ lý AI.\n\n" +
-                    "Bạn có thể yêu cầu tôi:\n" +
-                    "✨ 'Làm trắng da' hoặc 'Ảnh sáng hơn'\n" +
-                    "🎨 'Áp dụng bộ lọc Hoài cổ'\n" +
-                    "💬 Hoặc chỉ đơn giản là hỏi cách chỉnh ảnh đẹp.\n\n" +
-                    "Tôi có thể giúp gì cho bạn ngay bây giờ?";
-            chatAdapter.addMessage(new ChatMessage(welcomeMsg, false));
+            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Tôi có thể giúp:\n✨ 'Làm trắng da'\n🎨 'Bộ lọc Hoài cổ'\nHoặc đặt câu hỏi bất kỳ.", false));
         }
 
         btnSendChat.setOnClickListener(v -> {
             String message = etChatInput.getText().toString().trim();
             if (!message.isEmpty()) {
-                processUserMessage(message);
+                hideKeyboard();
+                processMessage(message);
             }
         });
     }
 
-    private void processUserMessage(String message) {
-        // Hiển thị tin nhắn của người dùng
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    private void processMessage(String message) {
         chatAdapter.addMessage(new ChatMessage(message, true));
         etChatInput.setText("");
         rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
 
-        // TRUNG GIAN (ĐẦU VÀO): Kiểm tra xử lý cục bộ để giảm tải server
+        // Kiểm tra lệnh cục bộ để phản hồi tức thì
         if (AiResponseManager.handleLocalInput(message, aiCallback)) {
             return;
         }
 
-        // Gửi lên AI nếu không xử lý cục bộ được
         pbAiThinking.setVisibility(View.VISIBLE);
         geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
             @Override
             public void onSuccess(String response) {
                 runOnUiThread(() -> {
                     pbAiThinking.setVisibility(View.GONE);
-                    // TRUNG GIAN (ĐẦU RA): Parse kết quả để hiển thị thân thiện
                     AiResponseManager.parseResponse(response, aiCallback);
                 });
             }

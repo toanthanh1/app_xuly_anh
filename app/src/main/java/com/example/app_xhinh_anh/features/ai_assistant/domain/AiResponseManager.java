@@ -12,67 +12,55 @@ public class AiResponseManager {
     }
 
     /**
-     * XỬ LÝ ĐẦU VÀO: Giảm tải cho AI bằng cách nhận diện các lệnh phổ biến tại local.
-     * @return true nếu lệnh đã được xử lý, không cần gửi lên server.
+     * TỐI ƯU ĐẦU VÀO: Phản ứng tức thì với các lệnh phổ biến
      */
     public static boolean handleLocalInput(String input, ResponseCallback callback) {
+        if (input == null) return false;
         String lowerInput = input.toLowerCase().trim();
         
-        // 1. Phân loại các yêu cầu chào hỏi
-        if (lowerInput.matches("^(xin chào|hi|hello|chào|helo)$")) {
-            callback.onMessage("Xin chào! Tôi là Trợ lý AI của bạn. Tôi có thể giúp bạn chọn bộ lọc màu hoặc chỉnh độ sáng ảnh. Bạn muốn thử gì nào?");
+        // Chào hỏi - Phản hồi cực nhanh
+        if (lowerInput.equals("hi") || lowerInput.equals("hello") || lowerInput.equals("xin chào") || lowerInput.equals("chào")) {
+            callback.onMessage("Xin chào! Bạn cần tôi giúp gì cho bức ảnh này không? (Ví dụ: 'Làm trắng da', 'Chỉnh ảnh hoài cổ')");
             return true;
         }
 
-        // 2. Phân loại các yêu cầu cụ thể đã biết (Hard-coded để tiết kiệm API)
-        if (lowerInput.contains("làm trắng") || lowerInput.contains("trắng da") || lowerInput.contains("da sáng")) {
+        // Lệnh làm trắng
+        if (lowerInput.contains("làm trắng") || lowerInput.contains("trắng da") || lowerInput.contains("sáng da")) {
+            callback.onMessage("✨ Đang làm trắng da cho bạn...");
             callback.onApplyFilter("Snow White");
-            callback.onMessage("✨ Đang kích hoạt chế độ làm đẹp da (Snow White) cho bạn...");
             return true;
         }
 
-        if (lowerInput.contains("hoài cổ") || lowerInput.contains("ảnh cũ")) {
+        // Lệnh hoài cổ
+        if (lowerInput.contains("hoài cổ") || lowerInput.contains("ảnh cũ") || lowerInput.contains("retro")) {
+            callback.onMessage("📜 Đang áp dụng phong cách hoài cổ...");
             callback.onApplyFilter("Sepia");
-            callback.onMessage("📜 Đang áp dụng phong cách hoài cổ (Sepia) cho bức ảnh...");
             return true;
         }
 
-        return false; // Chuyển tiếp cho AI xử lý nếu không khớp lệnh local
+        return false;
     }
 
     /**
-     * XỬ LÝ ĐẦU RA: Phân tích kết quả từ AI để hiển thị giao diện đẹp hơn thay vì hiện JSON.
+     * TỐI ƯU ĐẦU RA: Xử lý chuỗi JSON từ AI một cách gọn gàng
      */
     public static void parseResponse(String rawResponse, ResponseCallback callback) {
         try {
-            // Loại bỏ các phần text thừa nếu AI trả về định dạng ```json ... ```
-            String cleanResponse = rawResponse.replaceAll("```json", "").replaceAll("```", "").trim();
+            // Loại bỏ các ký tự thừa từ AI (như markdown ```json)
+            String clean = rawResponse.replace("```json", "").replace("```", "").trim();
             
-            int jsonStart = cleanResponse.indexOf("{");
-            int jsonEnd = cleanResponse.lastIndexOf("}");
-            
-            if (jsonStart != -1 && jsonEnd != -1) {
-                String jsonStr = cleanResponse.substring(jsonStart, jsonEnd + 1);
-                JSONObject json = new JSONObject(jsonStr);
+            if (clean.startsWith("{")) {
+                JSONObject json = new JSONObject(clean);
                 String action = json.optString("action", "");
 
-                switch (action) {
-                    case "APPLY_FILTER":
-                        String filterName = json.optString("filter_name", "");
-                        callback.onApplyFilter(filterName);
-                        callback.onMessage("✅ Đã áp dụng bộ lọc: " + filterName);
-                        break;
-                        
-                    case "ADJUST":
-                        callback.onMessage("⚙️ Đã điều chỉnh các thông số ảnh theo yêu cầu của bạn.");
-                        break;
-                        
-                    case "MESSAGE":
-                        callback.onMessage(json.optString("message", ""));
-                        break;
-                        
-                    default:
-                        callback.onMessage(cleanResponse);
+                if ("APPLY_FILTER".equals(action)) {
+                    String filter = json.optString("filter_name", "");
+                    callback.onMessage("✅ Đã chọn bộ lọc: " + filter);
+                    callback.onApplyFilter(filter);
+                } else if ("MESSAGE".equals(action)) {
+                    callback.onMessage(json.optString("message", ""));
+                } else {
+                    callback.onMessage(clean);
                 }
             } else {
                 callback.onMessage(rawResponse);
