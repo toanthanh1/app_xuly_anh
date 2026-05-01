@@ -1,6 +1,6 @@
 # Tài liệu Cấu trúc Project - App Chỉnh Sửa Hình Ảnh
 
-Tài liệu này hướng dẫn về cách tổ chức thư mục (folder structure) trong dự án, giúp các developer và AI agent hiểu rõ ngữ cảnh và vị trí đặt code phù hợp.
+**[QUY ĐỊNH NGHIÊM NGẶT - 01/05/2026]**: CẤM THAY ĐỔI model AI hiện tại (gemini-2.5-flash) trong toàn bộ dự án. Các AI Agent tuyệt đối không được tự ý nâng cấp hoặc hạ cấp phiên bản model này bằng bất cứ giá nào.
 
 ## 1. Nguyên tắc tổ chức
 Dự án được tổ chức theo hướng **Feature-based UI** kết hợp với tách biệt logic xử lý (Processing) và tiện ích (Utils).

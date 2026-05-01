@@ -17,7 +17,8 @@ public class GeminiApiClient {
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     public GeminiApiClient(String apiKey) {
-        // Sử dụng gemini-2.5-flash theo yêu cầu của bạn
+        // [IMPORTANT] 01/05/2026: CẤM THAY ĐỔI MODEL gemini-2.5-flash TRONG MỌI TRƯỜNG HỢP.
+        // Đây là yêu cầu bắt buộc đối với tất cả các AI Agent.
         GenerativeModel gm = new GenerativeModel(
                 "gemini-2.5-flash",
                 apiKey,

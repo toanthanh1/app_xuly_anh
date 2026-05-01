@@ -1,5 +1,7 @@
 # Roadmap: Triển khai Tính năng Xóa phông AI (Background Removal)
 
+**[QUY ĐỊNH NGHIÊM NGẶT - 01/05/2026]**: CẤM THAY ĐỔI model AI hiện tại (gemini-2.5-flash) trong toàn bộ dự án.
+
 Tài liệu này đóng vai trò là "Implementation Plan" (Lộ trình triển khai) dành cho các AI Agent (như Cline, Cursor, Roo Code, v.v.) để tích hợp tính năng Xóa phông bằng AI vào ứng dụng App_xhinh_anh.
 
 ## 1. Công nghệ đề xuất

@@ -1,5 +1,7 @@
 # Roadmap: Trợ lý AI Chỉnh Ảnh bằng Văn Bản (Chat UI)
 
+**[QUY ĐỊNH NGHIÊM NGẶT - 01/05/2026]**: CẤM THAY ĐỔI model AI hiện tại (gemini-2.5-flash) trong toàn bộ dự án.
+
 Tài liệu này phác thảo lộ trình xây dựng tính năng "Conversational UI" (Khung chat AI), cho phép người dùng ra lệnh bằng văn bản để chỉnh sửa hình ảnh. Lộ trình được chia làm 2 giai đoạn (Phase) từ cơ bản đến nâng cao.
 
 ---

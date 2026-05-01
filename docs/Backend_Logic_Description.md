@@ -1,5 +1,7 @@
 # Tài liệu Logic Backend cho các nút bấm tại MainActivity
 
+**[QUY ĐỊNH NGHIÊM NGẶT - 01/05/2026]**: CẤM THAY ĐỔI model AI hiện tại (gemini-2.5-flash) trong toàn bộ dự án. Các AI Agent tuyệt đối không được tự ý nâng cấp hoặc hạ cấp phiên bản model này.
+
 Tài liệu này mô tả logic xử lý (Backend logic) của lớp `ImageActionManager` chịu trách nhiệm quản lý việc chọn ảnh từ thư viện và chụp ảnh từ Camera.
 
 ## 1. Thành phần chính

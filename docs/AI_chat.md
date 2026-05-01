@@ -1,5 +1,7 @@
 # Tài liệu System Prompts cho Trợ lý AI (Chat UI)
 
+**[QUY ĐỊNH NGHIÊM NGẶT - 01/05/2026]**: CẤM THAY ĐỔI model AI hiện tại (gemini-2.5-flash) trong toàn bộ dự án.
+
 Tài liệu này tổng hợp các bộ quy tắc (System Prompts) dùng để cấu hình cho Gemini API trong từng giai đoạn phát triển.
 
 ---
