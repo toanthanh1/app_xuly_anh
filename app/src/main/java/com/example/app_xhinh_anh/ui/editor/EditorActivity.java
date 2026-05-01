@@ -1020,7 +1020,6 @@ public class EditorActivity extends AppCompatActivity {
                     resolver.update(itemUri, values, null, null);
                 }
                 Toast.makeText(this, "Đã lưu ảnh vào thư viện!", Toast.LENGTH_SHORT).show();
-                finish();
             } catch (Exception e) {
                 Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
