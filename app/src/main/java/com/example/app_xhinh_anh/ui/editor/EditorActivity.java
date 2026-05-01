@@ -1197,14 +1197,12 @@ public class EditorActivity extends AppCompatActivity {
         Toast.makeText(this, "Đang chỉnh " + property + " thành " + value, Toast.LENGTH_SHORT).show();
 
         int mode = -1;
-        String prop = property.toUpperCase();
-        if (prop.contains("BRIGHTNESS") || prop.contains("SÁNG")) mode = MODE_BRIGHTNESS;
-        else if (prop.contains("CONTRAST") || prop.contains("PHẢN")) mode = MODE_CONTRAST;
-        else if (prop.contains("SATURATION") || prop.contains("BÃO")) mode = MODE_SATURATION;
-        else if (prop.contains("SHARPNESS") || prop.contains("NÉT")) mode = MODE_SHARPNESS;
-        else if (prop.contains("CLARITY") || prop.contains("RÕ")) mode = MODE_CLARITY;
-        else if (prop.contains("HIGHLIGHTS") || prop.contains("SÁNG CAO")) mode = MODE_HIGHLIGHTS;
-        else if (prop.contains("SHADOWS") || prop.contains("VÙNG TỐI")) mode = MODE_SHADOWS;
+        switch (property.toUpperCase()) {
+            case "BRIGHTNESS": mode = MODE_BRIGHTNESS; break;
+            case "CONTRAST": mode = MODE_CONTRAST; break;
+            case "SATURATION": mode = MODE_SATURATION; break;
+            // Add more mappings
+        }
 
         if (mode != -1) {
             final int targetMode = mode;
@@ -1213,8 +1211,6 @@ public class EditorActivity extends AppCompatActivity {
                     findViewById(R.id.btnAdjust).performClick();
                 }
                 selectAdjustMode(targetMode);
-                // SeekBar progress thường là 0-100 hoặc -100 đến 100 tùy thuộc tính.
-                // Ở đây giả định value từ AI gửi về là giá trị tuyệt đối phù hợp với UI.
                 seekAdjust.setProgress(value);
             });
         }
