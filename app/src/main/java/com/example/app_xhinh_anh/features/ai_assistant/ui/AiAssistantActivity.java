@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.BuildConfig;
 import com.example.app_xhinh_anh.features.ai_assistant.data.GeminiApiClient;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage;
 import com.example.app_xhinh_anh.features.ai_assistant.ui.adapter.ChatAdapter;
@@ -58,8 +59,8 @@ public class AiAssistantActivity extends AppCompatActivity {
         rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         rvChatHistory.setAdapter(chatAdapter);
 
-        // API Key nên được quản lý bảo mật hơn, đây là ví dụ
-        geminiApiClient = new GeminiApiClient("AIzaSyCV__w2nhDmIAuv9rrAL6LwCxLZJan4gxI");
+        // API Key được lấy từ BuildConfig (local.properties)
+        geminiApiClient = new GeminiApiClient(BuildConfig.GEMINI_API_KEY);
 
         if (chatAdapter.getItemCount() == 0) {
             chatAdapter.addMessage(new ChatMessage("Xin chào! Tôi là trợ lý AI. Tôi có thể giúp bạn chỉnh sửa ảnh. Hãy thử nói 'Làm ảnh tươi sáng hơn' hoặc 'Áp dụng bộ lọc Retro'.", false));
