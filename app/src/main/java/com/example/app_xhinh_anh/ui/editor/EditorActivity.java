@@ -1140,16 +1140,20 @@ public class EditorActivity extends AppCompatActivity {
                     ActionMapper.map(response, new ActionMapper.ActionListener() {
                         @Override
                         public void onApplyFilter(String filterName) {
-                            // Thêm tin nhắn xác nhận thay vì hiện mã JSON
                             chatAdapter.addMessage(new ChatMessage("Đang áp dụng bộ lọc: " + filterName, false));
                             applyAiFilter(filterName);
                         }
 
                         @Override
                         public void onAdjustProperty(String property, int value) {
-                            // Thêm tin nhắn xác nhận
                             chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
                             applyAiAdjustment(property, value);
+                        }
+
+                        @Override
+                        public void onOpenTool(String toolName) {
+                            chatAdapter.addMessage(new ChatMessage("Đang mở công cụ: " + toolName, false));
+                            openAiTool(toolName);
                         }
 
                         @Override
@@ -1232,17 +1236,15 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void applyAiAdjustment(String property, int value) {
-        Toast.makeText(this, "Đang chỉnh " + property + " thành " + value, Toast.LENGTH_SHORT).show();
-
         int mode = -1;
-        switch (property.toUpperCase()) {
-            case "BRIGHTNESS": mode = MODE_BRIGHTNESS; break;
-            case "CONTRAST": mode = MODE_CONTRAST; break;
-            case "SATURATION": mode = MODE_SATURATION; break;
-            case "SHARPNESS": mode = MODE_SHARPNESS; break;
-            case "CLARITY": mode = MODE_CLARITY; break;
-            case "HIGHLIGHTS": mode = MODE_HIGHLIGHTS; break;
-            case "SHADOWS": mode = MODE_SHADOWS; break;
+        switch (property.toLowerCase()) {
+            case "brightness": mode = MODE_BRIGHTNESS; break;
+            case "contrast": mode = MODE_CONTRAST; break;
+            case "saturation": mode = MODE_SATURATION; break;
+            case "sharpness": mode = MODE_SHARPNESS; break;
+            case "clarity": mode = MODE_CLARITY; break;
+            case "highlights": mode = MODE_HIGHLIGHTS; break;
+            case "shadows": mode = MODE_SHADOWS; break;
         }
 
         if (mode != -1) {
@@ -1252,20 +1254,35 @@ public class EditorActivity extends AppCompatActivity {
                     findViewById(R.id.btnAdjust).performClick();
                 }
                 selectAdjustMode(targetMode);
+                // AI trả về -100 đến 100, SeekBar là 0-100 (tương ứng -100 to 100 nếu logic app bạn vậy)
+                // Hoặc nếu SeekBar 0-100 là giá trị tuyệt đối, ta map value AI vào.
+                // Giả sử logic hiện tại của bạn là seek 50 = 0.
                 seekAdjust.setProgress(value + 50);
                 
-                // Cập nhật giá trị hiển thị trên UI ngay lập tức
                 applyColorAdjustments();
 
-                // Tự động nhấn nút "Apply" sau khi chỉnh AI để lưu lại kết quả
                 new android.os.Handler().postDelayed(() -> {
                     if (adjustPanel.getVisibility() == View.VISIBLE) {
-                        bakeAdjustments(); // Gọi hàm lưu của công cụ Adjust
+                        bakeAdjustments();
                         adjustPanel.setVisibility(View.GONE);
                     }
                 }, 1500);
             });
         }
+    }
+
+    private void openAiTool(String toolName) {
+        runOnUiThread(() -> {
+            if (adjustPanel.getVisibility() != View.VISIBLE) {
+                findViewById(R.id.btnAdjust).performClick();
+            }
+            
+            if (toolName.equalsIgnoreCase("curves")) {
+                selectAdjustMode(MODE_CURVES);
+            } else if (toolName.equalsIgnoreCase("hsl")) {
+                selectAdjustMode(MODE_HSL);
+            }
+        });
     }
 
     private void hideAllPanels() {

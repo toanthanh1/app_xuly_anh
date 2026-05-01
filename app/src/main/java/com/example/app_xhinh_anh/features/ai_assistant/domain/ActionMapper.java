@@ -6,6 +6,7 @@ public class ActionMapper {
     public interface ActionListener {
         void onApplyFilter(String filterName);
         void onAdjustProperty(String property, int value);
+        void onOpenTool(String toolName);
         void onRemoveBackground();
         void onMessage(String message);
     }
@@ -22,7 +23,10 @@ public class ActionMapper {
                     listener.onApplyFilter(json.optString("filter_name"));
                     break;
                 case "ADJUST":
-                    listener.onAdjustProperty(json.optString("property"), json.optInt("value", 50));
+                    listener.onAdjustProperty(json.optString("property"), json.optInt("value", 0));
+                    break;
+                case "OPEN_TOOL":
+                    listener.onOpenTool(json.optString("tool_name"));
                     break;
                 case "REMOVE_BACKGROUND":
                     listener.onRemoveBackground();
