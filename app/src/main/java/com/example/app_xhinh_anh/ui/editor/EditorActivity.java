@@ -1191,12 +1191,13 @@ public class EditorActivity extends AppCompatActivity {
                         selectVariant(variant, targetItem);
                         Toast.makeText(this, "Đã áp dụng: " + filterName, Toast.LENGTH_SHORT).show();
 
-                        // Tự động đóng Filter Panel sau 1 giây
+                        // Tự động lưu và đóng Filter Panel sau 1.2 giây để người dùng thấy kết quả
                         new android.os.Handler().postDelayed(() -> {
                             if (filterPanel.getVisibility() == View.VISIBLE) {
+                                bakeFilter(); // Quan trọng: Phải bake để áp dụng vĩnh viễn vào ảnh
                                 closeFilterPanel();
                             }
-                        }, 1000);
+                        }, 1200);
                     });
                     return;
                 }
