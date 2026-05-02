@@ -96,6 +96,8 @@ public class EditorActivity extends AppCompatActivity {
     private static final int MODE_CURVES = 6;
     private static final int MODE_HIGHLIGHTS = 7;
     private static final int MODE_SHADOWS = 8;
+    private static final int MODE_EXPOSURE = 9;
+    private static final int MODE_TEMPERATURE = 10;
     private int currentAdjustMode = MODE_BRIGHTNESS;
     private int brightnessValue = 0;
     private int contrastValue = 0;
@@ -106,6 +108,8 @@ public class EditorActivity extends AppCompatActivity {
     private int curvesValue = 0;
     private int highlightsValue = 0;
     private int shadowsValue = 0;
+    private int exposureValue = 0;
+    private int temperatureValue = 0;
 
     private BackgroundRemoverAi backgroundRemoverAi;
     private final ExecutorService processingExecutor = Executors.newSingleThreadExecutor();
@@ -317,6 +321,16 @@ public class EditorActivity extends AppCompatActivity {
         binding.labelHighlights.setTextColor(mode == MODE_HIGHLIGHTS ? active : inactive);
         binding.iconShadows.setColorFilter(mode == MODE_SHADOWS ? active : inactive);
         binding.labelShadows.setTextColor(mode == MODE_SHADOWS ? active : inactive);
+        
+        // Cập nhật các icon mới nếu có trong Layout
+        if (binding.iconExposure != null) {
+            binding.iconExposure.setColorFilter(mode == MODE_EXPOSURE ? active : inactive);
+            binding.labelExposure.setTextColor(mode == MODE_EXPOSURE ? active : inactive);
+        }
+        if (binding.iconTemperature != null) {
+            binding.iconTemperature.setColorFilter(mode == MODE_TEMPERATURE ? active : inactive);
+            binding.labelTemperature.setTextColor(mode == MODE_TEMPERATURE ? active : inactive);
+        }
 
         int value;
         switch (mode) {
@@ -328,8 +342,11 @@ public class EditorActivity extends AppCompatActivity {
             case MODE_CURVES: value = curvesValue; break;
             case MODE_HIGHLIGHTS: value = highlightsValue; break;
             case MODE_SHADOWS: value = shadowsValue; break;
-            default: value = brightnessValue;
+            case MODE_EXPOSURE: value = exposureValue; break;
+            case MODE_TEMPERATURE: value = temperatureValue; break;
+            default: value = brightnessValue; break;
         }
+
         binding.seekAdjust.setProgress(value + 50);
         binding.adjustValueText.setText(String.valueOf(value));
     }
@@ -344,6 +361,8 @@ public class EditorActivity extends AppCompatActivity {
         curvesValue = 0;
         highlightsValue = 0;
         shadowsValue = 0;
+        exposureValue = 0;
+        temperatureValue = 0;
     }
 
     private void applyColorAdjustments() {
@@ -381,6 +400,14 @@ public class EditorActivity extends AppCompatActivity {
                 0, 0, 1f, 0, brightness,
                 0, 0, 0, 1f, 0
         }));
+
+        if (exposureValue != 0) {
+            cm.postConcat(ImageProcessor.buildExposureMatrix(exposureValue));
+        }
+
+        if (temperatureValue != 0) {
+            cm.postConcat(ImageProcessor.buildTemperatureMatrix(temperatureValue));
+        }
 
         return cm;
     }
@@ -1039,6 +1066,8 @@ public class EditorActivity extends AppCompatActivity {
                     case "hsl": hslValue = internalValue; selectAdjustMode(MODE_HSL); break;
                     case "highlights": highlightsValue = internalValue; selectAdjustMode(MODE_HIGHLIGHTS); break;
                     case "shadows": shadowsValue = internalValue; selectAdjustMode(MODE_SHADOWS); break;
+                    case "exposure": exposureValue = internalValue; selectAdjustMode(MODE_EXPOSURE); break;
+                    case "temperature": temperatureValue = internalValue; selectAdjustMode(MODE_TEMPERATURE); break;
                 }
                 applyColorAdjustments();
                 if (isHeavyMode(currentAdjustMode)) {
@@ -1078,6 +1107,10 @@ public class EditorActivity extends AppCompatActivity {
                         cm.setSaturation(1f + val / 50f);
                     } else if (prop.equals("hsl")) {
                         cm.postConcat(ImageProcessor.buildHueMatrix(val * 3.6f));
+                    } else if (prop.equals("exposure")) {
+                        cm.postConcat(ImageProcessor.buildExposureMatrix(val));
+                    } else if (prop.equals("temperature")) {
+                        cm.postConcat(ImageProcessor.buildTemperatureMatrix(val));
                     }
                     
                     result = ImageProcessor.applyColorMatrix(result, cm);

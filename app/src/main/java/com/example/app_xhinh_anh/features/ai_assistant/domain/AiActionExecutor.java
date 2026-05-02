@@ -3,6 +3,8 @@ package com.example.app_xhinh_anh.features.ai_assistant.domain;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.List;
+
 /**
  * Class này chịu trách nhiệm thực thi các hành động mà AI yêu cầu.
  * Giúp tách biệt logic khỏi Activity chính để dễ quản lý và bảo trì.
@@ -38,10 +40,16 @@ public class AiActionExecutor {
             }
 
             @Override
-            public void onAdjustProperty(String property, int value) {
+            public void onAdjustProperties(List<ActionMapper.Adjustment> adjustments) {
                 mainHandler.post(() -> {
-                    actions.addChatMessage("Đang chỉnh " + property + " thành " + value + "%", false);
-                    actions.adjustProperty(property, value);
+                    StringBuilder sb = new StringBuilder("Đang điều chỉnh: ");
+                    for (int i = 0; i < adjustments.size(); i++) {
+                        ActionMapper.Adjustment adj = adjustments.get(i);
+                        actions.adjustProperty(adj.property, adj.value);
+                        sb.append(adj.property).append(" (").append(adj.value).append("%)");
+                        if (i < adjustments.size() - 1) sb.append(", ");
+                    }
+                    actions.addChatMessage(sb.toString(), false);
                 });
             }
 
