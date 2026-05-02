@@ -70,6 +70,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
+    <com.example.app_xhinh_anh.ui.editor.MaskOverlayView
+        android:id="@+id/maskOverlayView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/photoEditorView"
+        app:layout_constraintEnd_toEndOf="@+id/photoEditorView"
+        app:layout_constraintStart_toStartOf="@+id/photoEditorView"
+        app:layout_constraintTop_toTopOf="@+id/photoEditorView" />
+
     <FrameLayout
         android:id="@+id/editorBottomPanel"
         android:layout_width="match_parent"
@@ -78,467 +88,1001 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <LinearLayout
-            android:id="@+id/adjustPanel"
+    <LinearLayout
+        android:id="@+id/adjustPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#222222"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:visibility="gone">
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingVertical="4dp">
-
-                    <LinearLayout
-                        android:id="@+id/tabBrightness"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconBrightness"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Độ sáng"
-                            android:src="@drawable/ic_brightness"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelBrightness"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Độ sáng"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabContrast"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconContrast"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Tương phản"
-                            android:src="@drawable/ic_contrast"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelContrast"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Tương phản"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabSaturation"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconSaturation"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Bão hòa"
-                            android:src="@drawable/ic_saturation"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelSaturation"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Bão hòa"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabSharpness"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconSharpness"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Sắc nét"
-                            android:src="@drawable/ic_sharpness"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelSharpness"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Sắc nét"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabClarity"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconClarity"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Rõ nét"
-                            android:src="@drawable/ic_clarity"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelClarity"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Rõ nét"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabHsl"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconHsl"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="HSL"
-                            android:src="@drawable/ic_hsl"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelHsl"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="HSL"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabCurves"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconCurves"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Đường cong"
-                            android:src="@drawable/ic_curves"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelCurves"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Đường cong"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabHighlights"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconHighlights"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Vùng sáng"
-                            android:src="@drawable/ic_highlights"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelHighlights"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Vùng sáng"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/tabShadows"
-                        android:layout_width="72dp"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:paddingVertical="6dp">
-
-                        <ImageView
-                            android:id="@+id/iconShadows"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:contentDescription="Vùng tối"
-                            android:src="@drawable/ic_shadows"
-                            app:tint="@color/white" />
-
-                        <TextView
-                            android:id="@+id/labelShadows"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Vùng tối"
-                            android:textColor="@color/white"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <TextView
-                android:id="@+id/adjustValueText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="4dp"
-                android:text="0"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <com.example.app_xhinh_anh.ui.editor.RulerView
-                android:layout_width="match_parent"
-                android:layout_height="14dp"
-                android:layout_marginBottom="-6dp" />
-
-            <SeekBar
-                android:id="@+id/seekAdjust"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="50" />
+            android:scrollbars="none">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="end"
+                android:gravity="center"
                 android:orientation="horizontal"
-                android:paddingTop="4dp">
+                android:paddingVertical="4dp">
 
-                <Button
-                    android:id="@+id/btnAdjustReset"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                <LinearLayout
+                    android:id="@+id/tabBrightness"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconBrightness"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Độ sáng"
+                        android:src="@drawable/ic_brightness"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelBrightness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Độ sáng"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabContrast"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconContrast"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Tương phản"
+                        android:src="@drawable/ic_contrast"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelContrast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Tương phản"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabSaturation"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconSaturation"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Bão hòa"
+                        android:src="@drawable/ic_saturation"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelSaturation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Bão hòa"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabSharpness"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconSharpness"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Sắc nét"
+                        android:src="@drawable/ic_sharpness"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelSharpness"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Sắc nét"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabClarity"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconClarity"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Rõ nét"
+                        android:src="@drawable/ic_clarity"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelClarity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Rõ nét"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabHsl"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconHsl"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="HSL"
+                        android:src="@drawable/ic_hsl"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelHsl"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="HSL"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabCurves"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconCurves"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Đường cong"
+                        android:src="@drawable/ic_curves"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelCurves"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Đường cong"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabHighlights"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconHighlights"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Vùng sáng"
+                        android:src="@drawable/ic_highlights"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelHighlights"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Vùng sáng"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabShadows"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconShadows"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Vùng tối"
+                        android:src="@drawable/ic_shadows"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelShadows"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Vùng tối"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabTemp"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconTemp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Nhiệt độ"
+                        android:src="@drawable/ic_temp"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelTemp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Nhiệt độ"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabHue"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconHue"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Tông màu"
+                        android:src="@drawable/ic_hue"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelHue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Tông màu"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabFade"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconFade"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Phai màu"
+                        android:src="@drawable/ic_fade"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelFade"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Phai màu"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabVignette"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconVignette"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Mờ viền"
+                        android:src="@drawable/ic_vignette"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelVignette"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Mờ viền"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabGrain"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconGrain"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Hạt nhiễu"
+                        android:src="@drawable/ic_grain"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelGrain"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Hạt nhiễu"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/adjustValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:text="0"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.example.app_xhinh_anh.ui.editor.RulerView
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_marginBottom="-6dp" />
+
+        <SeekBar
+            android:id="@+id/seekAdjust"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="50" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:paddingTop="4dp">
+
+            <Button
+                android:id="@+id/btnAdjustReset"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đặt lại"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnAdjustApply"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xong"
+                android:textColor="@color/brand_green" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/filterPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/filterCategoryTabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="2dp" />
+        </HorizontalScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="6dp"
+            android:background="#333333" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/filterVariantsList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/filterIntensityValueText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:paddingTop="4dp"
+            android:text="100"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <com.example.app_xhinh_anh.ui.editor.RulerView
+            android:layout_width="match_parent"
+            android:layout_height="14dp"
+            android:layout_marginBottom="-6dp" />
+
+        <SeekBar
+            android:id="@+id/filterIntensitySeek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="100" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:paddingTop="4dp">
+
+            <Button
+                android:id="@+id/btnFilterReset"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đặt lại"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnFilterApply"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xong"
+                android:textColor="@color/brand_green" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/brushPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingVertical="2dp">
+
+            <LinearLayout
+                android:id="@+id/brushStylePen"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:id="@+id/iconBrushStylePen"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Bút"
+                    android:src="@drawable/ic_brush"
+                    app:tint="@color/brand_green" />
+
+                <TextView
+                    android:id="@+id/labelBrushStylePen"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Đặt lại"
-                    android:textColor="@color/white" />
+                    android:layout_marginTop="4dp"
+                    android:text="Bút"
+                    android:textColor="@color/brand_green"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
-                <Button
-                    android:id="@+id/btnAdjustApply"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+            <LinearLayout
+                android:id="@+id/brushStyleHighlighter"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:id="@+id/iconBrushStyleHighlighter"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Dạ quang"
+                    android:src="@drawable/ic_highlighter"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/labelBrushStyleHighlighter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Xong"
-                    android:textColor="@color/brand_green" />
+                    android:layout_marginTop="4dp"
+                    android:text="Dạ quang"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/brushStyleEraser"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:id="@+id/iconBrushStyleEraser"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="Tẩy"
+                    android:src="@drawable/ic_eraser"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/labelBrushStyleEraser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Tẩy"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/filterPanel"
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="4dp"
+            android:background="#333333" />
+
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#222222"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:visibility="gone">
+            android:scrollbars="none">
 
-            <HorizontalScrollView
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:id="@+id/brushColorRow"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
+                android:orientation="horizontal"
+                android:paddingVertical="4dp" />
+        </HorizontalScrollView>
 
-                <LinearLayout
-                    android:id="@+id/filterCategoryTabs"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingVertical="2dp" />
-            </HorizontalScrollView>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="6dp"
-                android:background="#333333" />
-
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:id="@+id/filterVariantsList"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingVertical="4dp" />
-            </HorizontalScrollView>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="6dp">
 
             <TextView
-                android:id="@+id/filterIntensityValueText"
-                android:layout_width="match_parent"
+                android:layout_width="60dp"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="4dp"
-                android:text="100"
+                android:gravity="start|center_vertical"
+                android:text="Độ dày"
                 android:textColor="@color/white"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <com.example.app_xhinh_anh.ui.editor.RulerView
-                android:layout_width="match_parent"
-                android:layout_height="14dp"
-                android:layout_marginBottom="-6dp" />
+                android:textSize="12sp" />
 
             <SeekBar
-                android:id="@+id/filterIntensitySeek"
-                android:layout_width="match_parent"
+                android:id="@+id/brushSizeSeek"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:progress="20" />
+
+            <TextView
+                android:id="@+id/brushSizeValueText"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:gravity="end|center_vertical"
+                android:text="20"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:gravity="start|center_vertical"
+                android:text="Độ trong"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/brushOpacitySeek"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:max="100"
                 android:progress="100" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/brushOpacityValueText"
+                android:layout_width="36dp"
                 android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="horizontal"
-                android:paddingTop="4dp">
-
-                <Button
-                    android:id="@+id/btnFilterReset"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Đặt lại"
-                    android:textColor="@color/white" />
-
-                <Button
-                    android:id="@+id/btnFilterApply"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Xong"
-                    android:textColor="@color/brand_green" />
-            </LinearLayout>
+                android:gravity="end|center_vertical"
+                android:text="100"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/stickerPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#222222"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:visibility="gone">
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:paddingTop="2dp">
+
+            <Button
+                android:id="@+id/btnBrushDone"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xong"
+                android:textColor="@color/brand_green" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/textPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/textInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints="no"
+            android:background="#2E2E2E"
+            android:hint="Nhập văn bản..."
+            android:inputType="textMultiLine|textCapSentences"
+            android:maxLines="3"
+            android:minHeight="44dp"
+            android:padding="10dp"
+            android:textColor="@color/white"
+            android:textColorHint="#888888"
+            android:textSize="16sp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingVertical="2dp">
+
+                <LinearLayout
+                    android:id="@+id/tabTextFont"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconTextFont"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Phông"
+                        android:src="@drawable/ic_text_font"
+                        app:tint="@color/brand_green" />
+
+                    <TextView
+                        android:id="@+id/labelTextFont"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Phông"
+                        android:textColor="@color/brand_green"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabTextColor"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconTextColor"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Màu"
+                        android:src="@drawable/ic_text_color"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelTextColor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Màu"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabTextSize"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconTextSize"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Cỡ chữ"
+                        android:src="@drawable/ic_text_size"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelTextSize"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Cỡ chữ"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabTextFormat"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconTextFormat"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Định dạng"
+                        android:src="@drawable/ic_text_format"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelTextFormat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Định dạng"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tabTextAlign"
+                    android:layout_width="72dp"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingVertical="6dp">
+
+                    <ImageView
+                        android:id="@+id/iconTextAlign"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Căn lề"
+                        android:src="@drawable/ic_text_align"
+                        app:tint="@color/white" />
+
+                    <TextView
+                        android:id="@+id/labelTextAlign"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Căn lề"
+                        android:textColor="@color/white"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="4dp"
+            android:background="#333333" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp">
 
             <HorizontalScrollView
+                android:id="@+id/textFontPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:scrollbars="none">
 
                 <LinearLayout
-                    android:id="@+id/stickerCategoryTabs"
+                    android:id="@+id/textFontRow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:paddingVertical="2dp" />
+                    android:paddingVertical="4dp" />
             </HorizontalScrollView>
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="6dp"
-                android:background="#333333" />
-
             <HorizontalScrollView
+                android:id="@+id/textColorPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
+                android:scrollbars="none"
+                android:visibility="gone">
 
                 <LinearLayout
-                    android:id="@+id/stickerList"
+                    android:id="@+id/textColorRow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -546,375 +1090,127 @@
             </HorizontalScrollView>
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="horizontal"
-                android:paddingTop="4dp">
-
-                <Button
-                    android:id="@+id/btnStickerDone"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Xong"
-                    android:textColor="@color/brand_green" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- New Text Styling Panel -->
-        <LinearLayout
-            android:id="@+id/textStylingPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#222222"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="100dp">
-
-                <!-- Text Color Tab -->
-                <LinearLayout
-                    android:id="@+id/textPanelColor"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:visibility="visible">
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvTextColors"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-                </LinearLayout>
-
-                <!-- Background Color Tab -->
-                <LinearLayout
-                    android:id="@+id/textPanelBackground"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvTextBgColors"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-                </LinearLayout>
-
-                <!-- Font Tab -->
-                <LinearLayout
-                    android:id="@+id/textPanelFont"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:paddingTop="8dp">
-                        <TextView
-                            android:id="@+id/btnStyleBold"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="B"
-                            android:textStyle="bold"
-                            android:textColor="@color/white"
-                            android:gravity="center"
-                            android:textSize="18sp"
-                            android:background="?attr/selectableItemBackground" />
-                        <TextView
-                            android:id="@+id/btnStyleItalic"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="I"
-                            android:textStyle="italic"
-                            android:textColor="@color/white"
-                            android:gravity="center"
-                            android:textSize="18sp"
-                            android:layout_marginHorizontal="16dp"
-                            android:background="?attr/selectableItemBackground" />
-                        <TextView
-                            android:id="@+id/btnStyleUnderline"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="U"
-                            android:textColor="@color/white"
-                            android:gravity="center"
-                            android:textSize="18sp"
-                            android:background="?attr/selectableItemBackground" />
-                    </LinearLayout>
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scrollbars="none">
-                        <LinearLayout
-                            android:id="@+id/textFontList"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:paddingHorizontal="16dp"/>
-                    </HorizontalScrollView>
-                </LinearLayout>
-            </FrameLayout>
-
-            <!-- Bottom Tabs Bar for Styling -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:background="#111111"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageButton
-                    android:id="@+id/btnTextStylingClose"
-                    android:layout_width="60dp"
-                    android:layout_height="match_parent"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_close"
-                    app:tint="#888888" />
-
-                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-
-                <ImageButton
-                    android:id="@+id/tabTextBtnColor"
-                    android:layout_width="56dp"
-                    android:layout_height="match_parent"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_palette"
-                    app:tint="@color/brand_green" />
-
-                <ImageButton
-                    android:id="@+id/tabTextBtnBackground"
-                    android:layout_width="56dp"
-                    android:layout_height="match_parent"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_circle"
-                    app:tint="#888888" />
-
-                <ImageButton
-                    android:id="@+id/tabTextBtnFont"
-                    android:layout_width="56dp"
-                    android:layout_height="match_parent"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_font"
-                    app:tint="#888888" />
-
-                <ImageButton
-                    android:id="@+id/btnTextEditContent"
-                    android:layout_width="56dp"
-                    android:layout_height="match_parent"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_text"
-                    app:tint="#888888" />
-
-                <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-
-                <ImageButton
-                    android:id="@+id/btnTextStylingDone"
-                    android:layout_width="60dp"
-                    android:layout_height="match_parent"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_done"
-                    app:tint="#888888" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/brushPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#222222"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <!-- Stroke width and Color Preview -->
-            <LinearLayout
+                android:id="@+id/textSizePanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingTop="12dp">
+                android:visibility="gone">
 
                 <SeekBar
-                    android:id="@+id/seekBrushWidth"
+                    android:id="@+id/textSizeSeek"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:max="100"
-                    android:progress="10" />
-
-                <View
-                    android:id="@+id/btnChooseColor"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@drawable/bg_color_picker_button"
-                    android:clickable="true"
-                    android:focusable="true" />
-            </LinearLayout>
-
-            <!-- Shape Selection -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="12dp">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="16dp">
-
-                    <ImageButton
-                        android:id="@+id/btnBrushEraser"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/bg_filter_thumb_selected"
-                        android:src="@drawable/ic_eraser"
-                        android:padding="16dp"
-                        android:scaleType="fitCenter"
-                        android:layout_marginEnd="8dp" />
-
-                    <ImageButton
-                        android:id="@+id/btnBrushFree"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/bg_filter_thumb_selected"
-                        android:src="@drawable/ic_brush"
-                        android:padding="16dp"
-                        android:scaleType="fitCenter"
-                        android:layout_marginEnd="8dp" />
-
-                    <ImageButton
-                        android:id="@+id/btnBrushArrow"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/bg_filter_thumb_selected"
-                        android:src="@drawable/ic_arrow_right"
-                        android:padding="16dp"
-                        android:scaleType="fitCenter"
-                        android:layout_marginEnd="8dp" />
-
-                    <ImageButton
-                        android:id="@+id/btnBrushLine"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/bg_filter_thumb_selected"
-                        android:src="@drawable/ic_line"
-                        android:padding="16dp"
-                        android:scaleType="fitCenter"
-                        android:layout_marginEnd="8dp" />
-
-                    <ImageButton
-                        android:id="@+id/btnBrushRect"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/bg_filter_thumb_selected"
-                        android:src="@drawable/ic_square"
-                        android:padding="16dp"
-                        android:scaleType="fitCenter"
-                        android:layout_marginEnd="8dp" />
-
-                    <ImageButton
-                        android:id="@+id/btnBrushOval"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:background="@drawable/bg_filter_thumb_selected"
-                        android:src="@drawable/ic_circle"
-                        android:padding="16dp"
-                        android:scaleType="fitCenter" />
-
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <!-- Bottom Actions -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:paddingHorizontal="16dp">
-
-                <ImageButton
-                    android:id="@+id/btnBrushClose"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_close"
-                    android:layout_alignParentStart="true" />
+                    android:max="80"
+                    android:progress="32" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/textSizeValueText"
+                    android:layout_width="36dp"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:text="Vẽ phác"
+                    android:gravity="end|center_vertical"
+                    android:text="32"
                     android:textColor="@color/white"
-                    android:textSize="16sp" />
-
-                <ImageButton
-                    android:id="@+id/btnBrushDone"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_done"
-                    android:layout_alignParentEnd="true" />
-            </RelativeLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/colorPickerPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#222222"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:text="Chọn màu"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <GridLayout
-                android:id="@+id/colorGrid"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:alignmentMode="alignMargins"
-                android:columnCount="12"
-                android:rowOrderPreserved="false" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"
-                android:text="Thường dùng"
-                android:textColor="@color/white"
-                android:textSize="14sp" />
-
-            <LinearLayout
-                android:id="@+id/commonColors"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <!-- Common colors will be added here -->
+                    android:textSize="12sp" />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/textFormatPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingVertical="6dp"
+                android:visibility="gone">
+
+                <ImageButton
+                    android:id="@+id/btnTextBold"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Đậm"
+                    android:src="@drawable/ic_format_bold"
+                    app:tint="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/btnTextItalic"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Nghiêng"
+                    android:src="@drawable/ic_format_italic"
+                    app:tint="@color/white" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/textAlignPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingVertical="6dp"
+                android:visibility="gone">
+
+                <ImageButton
+                    android:id="@+id/btnTextAlignLeft"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Trái"
+                    android:src="@drawable/ic_align_left"
+                    app:tint="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/btnTextAlignCenter"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Giữa"
+                    android:src="@drawable/ic_align_center"
+                    app:tint="@color/brand_green" />
+
+                <ImageButton
+                    android:id="@+id/btnTextAlignRight"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Phải"
+                    android:src="@drawable/ic_align_right"
+                    app:tint="@color/white" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="end"
+            android:orientation="horizontal"
+            android:paddingTop="2dp">
+
+            <Button
+                android:id="@+id/btnTextCancel"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hủy"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnTextDone"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Thêm"
+                android:textColor="@color/brand_green" />
         </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/chatPanel"
+        android:id="@+id/smartEraserPanel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#222222"
@@ -924,58 +1220,213 @@
         android:visibility="gone">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Trợ lý AI"
-            android:textColor="@color/brand_green"
+            android:gravity="center"
+            android:text="Tẩy thông minh"
+            android:textColor="@color/white"
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvChatHistory"
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:layout_marginTop="8dp"
-            android:scrollbars="vertical" />
-
-        <ProgressBar
-            android:id="@+id/pbAiThinking"
-            style="?android:attr/progressBarStyleSmall"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginVertical="4dp"
-            android:visibility="gone" />
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:text="Chọn chế độ chỉnh sửa bằng AI"
+            android:textColor="#AAAAAA"
+            android:textSize="11sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/btnSmartEraserAi"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="10dp">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:contentDescription="Tẩy AI"
+                    android:src="@drawable/ic_eraser"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Tẩy AI"
+                    android:textColor="@color/white"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="Xóa vùng được chọn"
+                    android:textColor="#AAAAAA"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnRemoveBackground"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="10dp">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:contentDescription="Xóa phông"
+                    android:src="@drawable/ic_grain"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Xóa phông"
+                    android:textColor="@color/white"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="Tách chủ thể tự động"
+                    android:textColor="#AAAAAA"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnSmartEraserCancel"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đóng"
+                android:textColor="@color/white" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/maskPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Tẩy AI"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:text="Tô lên vùng cần loại bỏ, AI sẽ tự sửa lại"
+            android:textColor="#AAAAAA"
+            android:textSize="11sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/etChatInput"
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/bg_chat_input"
-                android:hint="Nhập yêu cầu (VD: Làm ảnh cũ đi)"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp"
+                android:text="Cỡ cọ"
                 android:textColor="@color/white"
-                android:textColorHint="#888888"
-                android:textSize="14sp" />
+                android:textSize="12sp" />
 
-            <ImageButton
-                android:id="@+id/btnSendChat"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Gửi"
-                android:src="@drawable/ic_send"
-                app:tint="@color/brand_green" />
+            <SeekBar
+                android:id="@+id/maskBrushSizeSeek"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:max="120"
+                android:progress="30" />
+
+            <TextView
+                android:id="@+id/maskBrushSizeValue"
+                android:layout_width="32dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="30"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnMaskClear"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Xoá nét"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnMaskCancel"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hủy"
+                android:textColor="@color/white" />
+
+            <Button
+                android:id="@+id/btnMaskApply"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Áp dụng"
+                android:textColor="@color/brand_green" />
         </LinearLayout>
     </LinearLayout>
 
@@ -1023,7 +1474,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnFlipHorizontal"
+                android:id="@+id/btnFlip"
                 android:layout_width="68dp"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
@@ -1036,7 +1487,7 @@
                 <ImageView
                     android:layout_width="26dp"
                     android:layout_height="26dp"
-                    android:contentDescription="Lật ngang"
+                    android:contentDescription="Lật"
                     android:src="@drawable/ic_flip"
                     app:tint="@color/white" />
 
@@ -1044,34 +1495,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Lật ngang"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnFlipVertical"
-                android:layout_width="68dp"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:paddingVertical="6dp">
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:contentDescription="Lật dọc"
-                    android:src="@drawable/ic_flip_vertical"
-                    app:tint="@color/white" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Lật dọc"
+                    android:text="Lật"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1187,6 +1611,35 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/btnSmartEraser"
+                android:layout_width="68dp"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:id="@+id/iconSmartEraser"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Tẩy thông minh"
+                    android:src="@drawable/ic_eraser"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:id="@+id/labelSmartEraser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Tẩy AI"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnSticker"
                 android:layout_width="68dp"
                 android:layout_height="wrap_content"
@@ -1209,60 +1662,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Sticker"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnAiRmBg"
-                android:layout_width="68dp"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:paddingVertical="6dp">
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:contentDescription="@string/ai_rm_bg"
-                    android:src="@drawable/ic_auto_fix"
-                    app:tint="@color/white" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/ai_rm_bg"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnAiAssistant"
-                android:layout_width="68dp"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:paddingVertical="6dp">
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:contentDescription="@string/ai_assistant"
-                    android:src="@drawable/ic_auto_fix"
-                    app:tint="@color/white" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/ai_assistant"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
