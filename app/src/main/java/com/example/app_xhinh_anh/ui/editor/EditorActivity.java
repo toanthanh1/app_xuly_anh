@@ -170,7 +170,6 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void loadImage(Uri uri) {
-        Dialog loadingDialog = showLoadingDialog("Đang chuẩn bị ảnh...");
         Glide.with(this)
                 .asBitmap()
                 .load(uri)
@@ -178,7 +177,6 @@ public class EditorActivity extends AppCompatActivity {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         binding.photoEditorView.getSource().setImageBitmap(resource);
-                        loadingDialog.dismiss();
                     }
 
                     @Override
@@ -187,7 +185,6 @@ public class EditorActivity extends AppCompatActivity {
 
                     @Override
                     public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                        loadingDialog.dismiss();
                         Toast.makeText(EditorActivity.this, "Lỗi khi tải ảnh", Toast.LENGTH_SHORT).show();
                         finish();
                     }

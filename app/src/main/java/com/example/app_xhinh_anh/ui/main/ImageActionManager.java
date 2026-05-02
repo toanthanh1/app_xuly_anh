@@ -120,10 +120,19 @@ public class ImageActionManager {
     }
 
     private void navigateToEditorActivity(Uri uri) {
-        Intent intent = new Intent(activity, EditorActivity.class);
-        intent.putExtra("image_uri", uri.toString());
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        activity.startActivity(intent);
+        if (activity instanceof MainActivity) {
+            MainActivity mainActivity = (MainActivity) activity;
+            mainActivity.showLoadingDialog("Đang chuẩn bị trình chỉnh sửa...");
+            mainActivity.setWaitingForEditor(true);
+        }
+
+        // Tạo một khoảng trễ nhỏ để người dùng thấy loading trước khi chuyển cảnh
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            Intent intent = new Intent(activity, EditorActivity.class);
+            intent.putExtra("image_uri", uri.toString());
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            activity.startActivity(intent);
+        }, 400);
     }
 
     private Uri createImageUri() throws IOException {
