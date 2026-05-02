@@ -96,6 +96,8 @@ public class EditorActivity extends AppCompatActivity {
     private static final int MODE_CURVES = 6;
     private static final int MODE_HIGHLIGHTS = 7;
     private static final int MODE_SHADOWS = 8;
+    private static final int MODE_EXPOSURE = 9;
+    private static final int MODE_TEMPERATURE = 10;
     private int currentAdjustMode = MODE_BRIGHTNESS;
     private int brightnessValue = 0;
     private int contrastValue = 0;
@@ -106,6 +108,8 @@ public class EditorActivity extends AppCompatActivity {
     private int curvesValue = 0;
     private int highlightsValue = 0;
     private int shadowsValue = 0;
+    private int exposureValue = 0;
+    private int temperatureValue = 0;
 
     private BackgroundRemoverAi backgroundRemoverAi;
     private final ExecutorService processingExecutor = Executors.newSingleThreadExecutor();
@@ -120,6 +124,7 @@ public class EditorActivity extends AppCompatActivity {
     // AI Assistant
     private ChatAdapter chatAdapter;
     private GeminiApiClient geminiApiClient;
+    private com.example.app_xhinh_anh.features.ai_assistant.domain.AiActionExecutor aiActionExecutor;
 
     // Managers
     private BrushManager brushManager;
@@ -233,6 +238,8 @@ public class EditorActivity extends AppCompatActivity {
         binding.tabCurves.setOnClickListener(v -> selectAdjustMode(MODE_CURVES));
         binding.tabHighlights.setOnClickListener(v -> selectAdjustMode(MODE_HIGHLIGHTS));
         binding.tabShadows.setOnClickListener(v -> selectAdjustMode(MODE_SHADOWS));
+        binding.tabExposure.setOnClickListener(v -> selectAdjustMode(MODE_EXPOSURE));
+        binding.tabTemperature.setOnClickListener(v -> selectAdjustMode(MODE_TEMPERATURE));
 
         binding.seekAdjust.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -249,6 +256,8 @@ public class EditorActivity extends AppCompatActivity {
                     case MODE_CURVES: curvesValue = value; break;
                     case MODE_HIGHLIGHTS: highlightsValue = value; break;
                     case MODE_SHADOWS: shadowsValue = value; break;
+                    case MODE_EXPOSURE: exposureValue = value; break;
+                    case MODE_TEMPERATURE: temperatureValue = value; break;
                     default: brightnessValue = value;
                 }
                 applyColorAdjustments();
@@ -316,6 +325,16 @@ public class EditorActivity extends AppCompatActivity {
         binding.labelHighlights.setTextColor(mode == MODE_HIGHLIGHTS ? active : inactive);
         binding.iconShadows.setColorFilter(mode == MODE_SHADOWS ? active : inactive);
         binding.labelShadows.setTextColor(mode == MODE_SHADOWS ? active : inactive);
+        
+        // Cập nhật các icon mới nếu có trong Layout
+        if (binding.iconExposure != null) {
+            binding.iconExposure.setColorFilter(mode == MODE_EXPOSURE ? active : inactive);
+            binding.labelExposure.setTextColor(mode == MODE_EXPOSURE ? active : inactive);
+        }
+        if (binding.iconTemperature != null) {
+            binding.iconTemperature.setColorFilter(mode == MODE_TEMPERATURE ? active : inactive);
+            binding.labelTemperature.setTextColor(mode == MODE_TEMPERATURE ? active : inactive);
+        }
 
         int value;
         switch (mode) {
@@ -327,8 +346,11 @@ public class EditorActivity extends AppCompatActivity {
             case MODE_CURVES: value = curvesValue; break;
             case MODE_HIGHLIGHTS: value = highlightsValue; break;
             case MODE_SHADOWS: value = shadowsValue; break;
-            default: value = brightnessValue;
+            case MODE_EXPOSURE: value = exposureValue; break;
+            case MODE_TEMPERATURE: value = temperatureValue; break;
+            default: value = brightnessValue; break;
         }
+
         binding.seekAdjust.setProgress(value + 50);
         binding.adjustValueText.setText(String.valueOf(value));
     }
@@ -343,6 +365,8 @@ public class EditorActivity extends AppCompatActivity {
         curvesValue = 0;
         highlightsValue = 0;
         shadowsValue = 0;
+        exposureValue = 0;
+        temperatureValue = 0;
     }
 
     private void applyColorAdjustments() {
@@ -380,6 +404,14 @@ public class EditorActivity extends AppCompatActivity {
                 0, 0, 1f, 0, brightness,
                 0, 0, 0, 1f, 0
         }));
+
+        if (exposureValue != 0) {
+            cm.postConcat(ImageProcessor.buildExposureMatrix(exposureValue));
+        }
+
+        if (temperatureValue != 0) {
+            cm.postConcat(ImageProcessor.buildTemperatureMatrix(temperatureValue));
+        }
 
         return cm;
     }
@@ -723,7 +755,7 @@ public class EditorActivity extends AppCompatActivity {
     private void hideAllPanels() {
         if (binding.adjustPanel.getVisibility() == View.VISIBLE) closeAdjustPanel(false);
         if (binding.filterPanel.getVisibility() == View.VISIBLE) closeFilterPanel(false);
-        if (binding.chatPanel.getVisibility() == View.VISIBLE) binding.chatPanel.setVisibility(View.GONE);
+        // Không đóng chatPanel khi hideAllPanels để AI có thể làm việc liên tục
         if (brushManager != null && brushManager.isPanelVisible()) brushManager.closeBrushPanel();
         if (textManager != null && textManager.isPanelVisible()) textManager.hideStylingPanel();
         if (stickerManager != null && stickerManager.isPanelVisible()) stickerManager.closeStickerPanel();
@@ -744,6 +776,7 @@ public class EditorActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Bitmap result) {
                 loadingDialog.dismiss();
+                photoEditor.clearAllViews();
                 saveBitmapState();
                 binding.photoEditorView.getSource().setImageBitmap(result);
                 Toast.makeText(EditorActivity.this, "Đã xóa nền!", Toast.LENGTH_SHORT).show();
@@ -852,6 +885,40 @@ public class EditorActivity extends AppCompatActivity {
     private void setupAiAssistant() {
         geminiApiClient = new GeminiApiClient(com.example.app_xhinh_anh.BuildConfig.GEMINI_API_KEY);
         
+        // Khởi tạo AiActionExecutor
+        aiActionExecutor = new com.example.app_xhinh_anh.features.ai_assistant.domain.AiActionExecutor(new com.example.app_xhinh_anh.features.ai_assistant.domain.AiActionExecutor.EditorActions() {
+            @Override
+            public void applyFilter(String filterName) {
+                applyAiFilter(filterName);
+            }
+
+            @Override
+            public void adjustProperty(String property, int value) {
+                applyAiAdjustment(property, value);
+            }
+
+            @Override
+            public void openTool(String toolName) {
+                openAiTool(toolName);
+            }
+
+            @Override
+            public void removeBackground() {
+                runOnUiThread(() -> binding.btnAiRmBg.performClick());
+            }
+
+            @Override
+            public void addChatMessage(String message, boolean isUser) {
+                chatAdapter.addMessage(new ChatMessage(message, isUser));
+                binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+            }
+
+            @Override
+            public void showThinking(boolean show) {
+                binding.pbAiThinking.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
+
         chatAdapter = new ChatAdapter();
         binding.rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         binding.rvChatHistory.setAdapter(chatAdapter);
@@ -922,46 +989,7 @@ public class EditorActivity extends AppCompatActivity {
         geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
             @Override
             public void onSuccess(String response) {
-                runOnUiThread(() -> {
-                    binding.pbAiThinking.setVisibility(View.GONE);
-                    ActionMapper.map(response, new ActionMapper.ActionListener() {
-                        @Override
-                        public void onApplyFilter(String filterName) {
-                            chatAdapter.addMessage(new ChatMessage("Đang áp dụng bộ lọc: " + filterName, false));
-                            applyAiFilter(filterName);
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onAdjustProperty(String property, int value) {
-                            chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
-                            applyAiAdjustment(property, value);
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onOpenTool(String toolName) {
-                            chatAdapter.addMessage(new ChatMessage("Đang mở công cụ: " + toolName, false));
-                            openAiTool(toolName);
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onRemoveBackground() {
-                            chatAdapter.addMessage(new ChatMessage("Đang thực hiện xóa nền...", false));
-                            runOnUiThread(() -> {
-                                binding.btnAiRmBg.performClick();
-                            });
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onMessage(String msg) {
-                            chatAdapter.addMessage(new ChatMessage(msg, false));
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-                    });
-                });
+                aiActionExecutor.executeResponse(response);
             }
 
             @Override
@@ -976,128 +1004,167 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void applyAiFilter(String filterName) {
-        // Tìm kiếm bộ lọc trong danh sách Category
+        FilterPreset targetVariant = null;
         for (FilterPreset.Category category : FilterPreset.CATEGORIES) {
             for (FilterPreset variant : category.variants) {
                 if (variant.displayName.equalsIgnoreCase(filterName)) {
-                    runOnUiThread(() -> {
-                        if (binding.filterPanel.getVisibility() != View.VISIBLE) {
-                            binding.btnFilter.performClick();
-                        }
-
-                        // Cập nhật UI category nếu cần
-                        int catIndex = -1;
-                        for (int i = 0; i < FilterPreset.CATEGORIES.length; i++) {
-                            if (FilterPreset.CATEGORIES[i] == category) {
-                                catIndex = i;
-                                break;
-                            }
-                        }
-                        if (catIndex != -1 && binding.filterCategoryTabs.getChildCount() > catIndex) {
-                            selectCategory(category, (TextView) binding.filterCategoryTabs.getChildAt(catIndex));
-                        }
-
-                        // Tìm và chọn variant trong list để có highlight UI
-                        View targetItem = null;
-                        for (int i = 0; i < binding.filterVariantsList.getChildCount(); i++) {
-                            View item = binding.filterVariantsList.getChildAt(i);
-                            TextView nameTv = item.findViewById(R.id.filterName);
-                            if (nameTv != null && nameTv.getText().toString().equalsIgnoreCase(filterName)) {
-                                targetItem = item;
-                                break;
-                            }
-                        }
-
-                        selectVariant(variant, targetItem);
-                        Toast.makeText(this, "AI: Đã áp dụng bộ lọc " + filterName, Toast.LENGTH_SHORT).show();
-
-                        // Tự động lưu (Bake) và đóng Filter Panel sau khi AI làm xong
-                        new android.os.Handler().postDelayed(() -> {
-                            if (binding.filterPanel.getVisibility() == View.VISIBLE) {
-                                bakeFilter(); // Lưu hiệu ứng vào ảnh gốc
-                                closeFilterPanel(true);
-                            }
-                        }, 1500);
-                    });
-                    return;
+                    targetVariant = variant;
+                    break;
                 }
             }
+            if (targetVariant != null) break;
         }
-        Toast.makeText(this, "Không tìm thấy bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
+
+        if (targetVariant == null) {
+            Toast.makeText(this, "Không tìm thấy bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final FilterPreset variant = targetVariant;
+        runOnUiThread(() -> {
+            if (binding.filterPanel.getVisibility() == View.VISIBLE) {
+                selectVariant(variant, null);
+                Toast.makeText(this, "AI: Đã chọn bộ lọc " + filterName, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
+                @Override
+                public void onBitmapReady(@NonNull Bitmap bitmap) {
+                    saveBitmapState();
+                    Bitmap result;
+                    if (variant.matrix != null) {
+                        result = ImageProcessor.applyColorMatrix(bitmap, variant.matrix);
+                    } else {
+                        result = ImageProcessor.copyBitmap(bitmap);
+                    }
+                    
+                    photoEditor.clearAllViews();
+                    binding.photoEditorView.getSource().setImageBitmap(result);
+                    binding.photoEditorView.getSource().clearColorFilter();
+                    Toast.makeText(EditorActivity.this, "AI: Đã áp dụng bộ lọc " + filterName, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(EditorActivity.this, "Lỗi khi áp dụng bộ lọc AI", Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
     }
 
     private void applyAiAdjustment(String property, int value) {
         if (property == null) return;
-        int mode = -1;
-        switch (property.toLowerCase()) {
-            case "brightness": mode = MODE_BRIGHTNESS; break;
-            case "contrast": mode = MODE_CONTRAST; break;
-            case "saturation": mode = MODE_SATURATION; break;
-            case "sharpness": mode = MODE_SHARPNESS; break;
-            case "clarity": mode = MODE_CLARITY; break;
-            case "hsl": mode = MODE_HSL; break;
-            case "highlights": mode = MODE_HIGHLIGHTS; break;
-            case "shadows": mode = MODE_SHADOWS; break;
-        }
+        
+        runOnUiThread(() -> {
+            String prop = property.toLowerCase();
+            int internalValue = Math.max(-50, Math.min(50, value));
 
-        if (mode != -1) {
-            final int targetMode = mode;
-            runOnUiThread(() -> {
-                if (binding.adjustPanel.getVisibility() != View.VISIBLE) {
-                    binding.btnAdjust.performClick();
+            if (binding.adjustPanel.getVisibility() == View.VISIBLE) {
+                switch (prop) {
+                    case "brightness": brightnessValue = internalValue; selectAdjustMode(MODE_BRIGHTNESS); break;
+                    case "contrast": contrastValue = internalValue; selectAdjustMode(MODE_CONTRAST); break;
+                    case "saturation": saturationValue = internalValue; selectAdjustMode(MODE_SATURATION); break;
+                    case "sharpness": sharpnessValue = internalValue; selectAdjustMode(MODE_SHARPNESS); break;
+                    case "clarity": clarityValue = internalValue; selectAdjustMode(MODE_CLARITY); break;
+                    case "hsl": hslValue = internalValue; selectAdjustMode(MODE_HSL); break;
+                    case "highlights": highlightsValue = internalValue; selectAdjustMode(MODE_HIGHLIGHTS); break;
+                    case "shadows": shadowsValue = internalValue; selectAdjustMode(MODE_SHADOWS); break;
+                    case "exposure": exposureValue = internalValue; selectAdjustMode(MODE_EXPOSURE); break;
+                    case "temperature": temperatureValue = internalValue; selectAdjustMode(MODE_TEMPERATURE); break;
                 }
-                
-                // Chọn mode trước
-                selectAdjustMode(targetMode);
-                
-                // Sau đó mới đặt giá trị (để tránh bị selectAdjustMode reset về 0)
-                // Map value từ AI (-100 đến 100) sang SeekBar (0-100)
-                int progress = value + 50; 
-                if (progress < 0) progress = 0;
-                if (progress > 100) progress = 100;
-                
-                binding.seekAdjust.setProgress(progress);
-                
-                // Cập nhật giá trị biến tương ứng trực tiếp để chắc chắn
-                int val = progress - 50;
-                switch (targetMode) {
-                    case MODE_CONTRAST: contrastValue = val; break;
-                    case MODE_SATURATION: saturationValue = val; break;
-                    case MODE_SHARPNESS: sharpnessValue = val; break;
-                    case MODE_CLARITY: clarityValue = val; break;
-                    case MODE_HSL: hslValue = val; break;
-                    case MODE_HIGHLIGHTS: highlightsValue = val; break;
-                    case MODE_SHADOWS: shadowsValue = val; break;
-                    default: brightnessValue = val;
-                }
-
                 applyColorAdjustments();
-                if (isHeavyMode(targetMode)) {
+                if (isHeavyMode(currentAdjustMode)) {
                     rebuildConvolutionBitmap();
                 }
+                Toast.makeText(this, "AI: Đã chỉnh " + property + " thành " + internalValue, Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                Toast.makeText(this, "AI: Đã chỉnh " + property + " " + value + "%", Toast.LENGTH_SHORT).show();
+            saveBitmapState();
+            photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
+                @Override
+                public void onBitmapReady(@NonNull Bitmap bitmap) {
+                    float val = (float) internalValue;
+                    ColorMatrix cm = new ColorMatrix();
+                    Bitmap result = bitmap;
 
-                new android.os.Handler().postDelayed(() -> {
-                    if (binding.adjustPanel.getVisibility() == View.VISIBLE) {
-                        bakeAdjustments();
-                        closeAdjustPanel(true);
+                    // Xử lý các thông số màu sắc (ColorMatrix)
+                    if (prop.equals("brightness")) {
+                        float b = val * 2f;
+                        cm.postConcat(new ColorMatrix(new float[]{
+                                1, 0, 0, 0, b,
+                                0, 1, 0, 0, b,
+                                0, 0, 1, 0, b,
+                                0, 0, 0, 1, 0
+                        }));
+                    } else if (prop.equals("contrast")) {
+                        float c = 1f + val / 50f;
+                        float t = (-.5f * c + .5f) * 255f;
+                        cm.postConcat(new ColorMatrix(new float[]{
+                                c, 0, 0, 0, t,
+                                0, c, 0, 0, t,
+                                0, 0, c, 0, t,
+                                0, 0, 0, 1, 0
+                        }));
+                    } else if (prop.equals("saturation")) {
+                        cm.setSaturation(1f + val / 50f);
+                    } else if (prop.equals("hsl")) {
+                        cm.postConcat(ImageProcessor.buildHueMatrix(val * 3.6f));
+                    } else if (prop.equals("exposure")) {
+                        cm.postConcat(ImageProcessor.buildExposureMatrix(val));
+                    } else if (prop.equals("temperature")) {
+                        cm.postConcat(ImageProcessor.buildTemperatureMatrix(val));
                     }
-                }, 2000);
+                    
+                    result = ImageProcessor.applyColorMatrix(result, cm);
+
+                    // Xử lý các hiệu ứng nâng cao (Convolution/LUT)
+                    if (prop.equals("sharpness")) {
+                        result = ImageProcessor.applySharpness(result, val / 50f);
+                    } else if (prop.equals("clarity")) {
+                        result = ImageProcessor.applyClarity(result, val / 50f);
+                    } else if (prop.equals("highlights") || prop.equals("shadows")) {
+                        float h = prop.equals("highlights") ? val / 50f : 0;
+                        float s = prop.equals("shadows") ? val / 50f : 0;
+                        int[] lut = ImageProcessor.buildToneLut(0, h, s);
+                        result = ImageProcessor.applyLut(result, lut);
+                    }
+
+                    photoEditor.clearAllViews();
+                    binding.photoEditorView.getSource().setImageBitmap(result);
+                    binding.photoEditorView.getSource().clearColorFilter();
+                    Toast.makeText(EditorActivity.this, "AI: Đã áp dụng " + property, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(EditorActivity.this, "Lỗi khi thực hiện chỉnh sửa AI", Toast.LENGTH_SHORT).show();
+                }
             });
-        }
+        });
     }
 
     private void openAiTool(String toolName) {
         runOnUiThread(() -> {
-            if (binding.adjustPanel.getVisibility() != View.VISIBLE) {
-                binding.btnAdjust.performClick();
-            }
-            
-            if (toolName.equalsIgnoreCase("curves")) {
-                selectAdjustMode(MODE_CURVES);
-            } else if (toolName.equalsIgnoreCase("hsl")) {
-                selectAdjustMode(MODE_HSL);
+            // Khi mở một công cụ cụ thể, ta sẽ đóng chat để người dùng thao tác
+            if (toolName.equalsIgnoreCase("curves") || toolName.equalsIgnoreCase("hsl") || 
+                toolName.equalsIgnoreCase("adjust") || toolName.equalsIgnoreCase("filter") ||
+                toolName.equalsIgnoreCase("bg_removal")) {
+                
+                binding.chatPanel.setVisibility(View.GONE);
+                
+                if (toolName.equalsIgnoreCase("filter")) {
+                    openFilterPanel();
+                } else if (toolName.equalsIgnoreCase("bg_removal")) {
+                    performAiBackgroundRemoval();
+                } else {
+                    if (binding.adjustPanel.getVisibility() != View.VISIBLE) {
+                        binding.btnAdjust.performClick();
+                    }
+                    if (toolName.equalsIgnoreCase("curves")) selectAdjustMode(MODE_CURVES);
+                    else if (toolName.equalsIgnoreCase("hsl")) selectAdjustMode(MODE_HSL);
+                }
             }
         });
     }

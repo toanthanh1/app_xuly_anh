@@ -51,7 +51,7 @@
                 android:focusable="true"
                 android:gravity="center"
                 android:paddingHorizontal="16dp"
-                android:text="Lưu"
+                android:text="@string/save"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -115,7 +115,7 @@
                             android:id="@+id/iconBrightness"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Độ sáng"
+                            android:contentDescription="@string/brightness"
                             android:src="@drawable/ic_brightness"
                             app:tint="@color/white" />
 
@@ -124,7 +124,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Độ sáng"
+                            android:text="@string/brightness"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -144,7 +144,7 @@
                             android:id="@+id/iconContrast"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Tương phản"
+                            android:contentDescription="@string/contrast"
                             android:src="@drawable/ic_contrast"
                             app:tint="@color/white" />
 
@@ -153,7 +153,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Tương phản"
+                            android:text="@string/contrast"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -173,7 +173,7 @@
                             android:id="@+id/iconSaturation"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Bão hòa"
+                            android:contentDescription="@string/saturation"
                             android:src="@drawable/ic_saturation"
                             app:tint="@color/white" />
 
@@ -182,7 +182,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Bão hòa"
+                            android:text="@string/saturation"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -202,7 +202,7 @@
                             android:id="@+id/iconSharpness"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Sắc nét"
+                            android:contentDescription="@string/sharpness"
                             android:src="@drawable/ic_sharpness"
                             app:tint="@color/white" />
 
@@ -211,7 +211,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Sắc nét"
+                            android:text="@string/sharpness"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -231,7 +231,7 @@
                             android:id="@+id/iconClarity"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Rõ nét"
+                            android:contentDescription="@string/clarity"
                             android:src="@drawable/ic_clarity"
                             app:tint="@color/white" />
 
@@ -240,7 +240,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Rõ nét"
+                            android:text="@string/clarity"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -260,7 +260,7 @@
                             android:id="@+id/iconHsl"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="HSL"
+                            android:contentDescription="@string/hsl"
                             android:src="@drawable/ic_hsl"
                             app:tint="@color/white" />
 
@@ -269,7 +269,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="HSL"
+                            android:text="@string/hsl"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -289,7 +289,7 @@
                             android:id="@+id/iconCurves"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Đường cong"
+                            android:contentDescription="@string/curves"
                             android:src="@drawable/ic_curves"
                             app:tint="@color/white" />
 
@@ -298,7 +298,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Đường cong"
+                            android:text="@string/curves"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -318,7 +318,7 @@
                             android:id="@+id/iconHighlights"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Vùng sáng"
+                            android:contentDescription="@string/highlights"
                             android:src="@drawable/ic_highlights"
                             app:tint="@color/white" />
 
@@ -327,7 +327,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Vùng sáng"
+                            android:text="@string/highlights"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -347,7 +347,7 @@
                             android:id="@+id/iconShadows"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:contentDescription="Vùng tối"
+                            android:contentDescription="@string/shadows"
                             android:src="@drawable/ic_shadows"
                             app:tint="@color/white" />
 
@@ -356,7 +356,65 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:text="Vùng tối"
+                            android:text="@string/shadows"
+                            android:textColor="@color/white"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/tabExposure"
+                        android:layout_width="72dp"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingVertical="6dp">
+
+                        <ImageView
+                            android:id="@+id/iconExposure"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/exposure"
+                            android:src="@drawable/ic_exposure"
+                            app:tint="@color/white" />
+
+                        <TextView
+                            android:id="@+id/labelExposure"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/exposure"
+                            android:textColor="@color/white"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/tabTemperature"
+                        android:layout_width="72dp"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:paddingVertical="6dp">
+
+                        <ImageView
+                            android:id="@+id/iconTemperature"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:contentDescription="@string/temperature"
+                            android:src="@drawable/ic_temperature"
+                            app:tint="@color/white" />
+
+                        <TextView
+                            android:id="@+id/labelTemperature"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/temperature"
                             android:textColor="@color/white"
                             android:textSize="11sp" />
                     </LinearLayout>
@@ -398,7 +456,7 @@
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Đặt lại"
+                    android:text="@string/reset"
                     android:textColor="@color/white" />
 
                 <Button
@@ -406,7 +464,7 @@
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Xong"
+                    android:text="@string/done"
                     android:textColor="@color/brand_green" />
             </LinearLayout>
         </LinearLayout>
@@ -489,7 +547,7 @@
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Đặt lại"
+                    android:text="@string/reset"
                     android:textColor="@color/white" />
 
                 <Button
@@ -497,7 +555,7 @@
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Xong"
+                    android:text="@string/done"
                     android:textColor="@color/brand_green" />
             </LinearLayout>
         </LinearLayout>
@@ -557,7 +615,7 @@
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Xong"
+                    android:text="@string/done"
                     android:textColor="@color/brand_green" />
             </LinearLayout>
         </LinearLayout>
@@ -1017,7 +1075,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Cắt"
+                    android:text="@string/crop"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1044,7 +1102,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Lật ngang"
+                    android:text="@string/flip_horizontal"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1071,7 +1129,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Lật dọc"
+                    android:text="@string/flip_vertical"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1098,7 +1156,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Chỉnh"
+                    android:text="@string/adjust"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1125,7 +1183,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Bộ lọc"
+                    android:text="@string/filter"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1154,7 +1212,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Vẽ"
+                    android:text="@string/brush"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1181,7 +1239,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Văn bản"
+                    android:text="@string/text"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -1208,7 +1266,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Sticker"
+                    android:text="@string/sticker"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>

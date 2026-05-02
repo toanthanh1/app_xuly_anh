@@ -91,6 +91,34 @@ public class ImageProcessor {
         });
     }
 
+    /**
+     * Tạo ColorMatrix cho nhiệt độ màu (Temperature).
+     * @param value -50 (Lạnh/Xanh) đến 50 (Ấm/Vàng)
+     */
+    public static ColorMatrix buildTemperatureMatrix(float value) {
+        float shift = value / 100f; // -0.5 to 0.5
+        return new ColorMatrix(new float[]{
+                1 + shift, 0, 0, 0, 0,
+                0, 1, 0, 0, 0,
+                0, 0, 1 - shift, 0, 0,
+                0, 0, 0, 1, 0
+        });
+    }
+
+    /**
+     * Tạo ColorMatrix cho độ phơi sáng (Exposure).
+     * @param value -50 đến 50
+     */
+    public static ColorMatrix buildExposureMatrix(float value) {
+        float scale = (float) Math.pow(2, value / 50f);
+        return new ColorMatrix(new float[]{
+                scale, 0, 0, 0, 0,
+                0, scale, 0, 0, 0,
+                0, 0, scale, 0, 0,
+                0, 0, 0, 1, 0
+        });
+    }
+
     public static Bitmap copyBitmap(Bitmap src) {
         if (src == null) return null;
         Bitmap.Config config = src.getConfig();
