@@ -624,7 +624,8 @@ public class EditorActivity extends AppCompatActivity {
             });
         });
         
-        binding.btnFlip.setOnClickListener(v -> flipImage());
+        binding.btnFlipHorizontal.setOnClickListener(v -> flipImage(-1, 1));
+        binding.btnFlipVertical.setOnClickListener(v -> flipImage(1, -1));
 
         binding.btnUndo.setOnClickListener(v -> {
             if (!undoBitmapStack.isEmpty()) {
@@ -682,12 +683,12 @@ public class EditorActivity extends AppCompatActivity {
         binding.btnSave.setOnClickListener(v -> saveProcessedImage());
     }
 
-    private void flipImage() {
+    private void flipImage(float sx, float sy) {
         if (!(binding.photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) return;
         saveBitmapState();
         Bitmap src = ((BitmapDrawable) binding.photoEditorView.getSource().getDrawable()).getBitmap();
         Matrix matrix = new Matrix();
-        matrix.postScale(-1, 1, src.getWidth() / 2f, src.getHeight() / 2f);
+        matrix.postScale(sx, sy, src.getWidth() / 2f, src.getHeight() / 2f);
         Bitmap flipped = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
         photoEditor.clearAllViews();
         binding.photoEditorView.getSource().setImageBitmap(flipped);
