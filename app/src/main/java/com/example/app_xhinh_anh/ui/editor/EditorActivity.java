@@ -47,6 +47,10 @@ import com.example.app_xhinh_anh.features.ai_assistant.ui.adapter.ChatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import android.view.inputmethod.InputMethodManager;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 import java.io.File;
 import java.io.InputStream;
@@ -161,8 +165,33 @@ public class EditorActivity extends AppCompatActivity {
         String imageUriString = getIntent().getStringExtra("image_uri");
         if (imageUriString != null) {
             currentImageUri = Uri.parse(imageUriString);
-            binding.photoEditorView.getSource().setImageURI(currentImageUri);
+            loadImage(currentImageUri);
         }
+    }
+
+    private void loadImage(Uri uri) {
+        Dialog loadingDialog = showLoadingDialog("Đang chuẩn bị ảnh...");
+        Glide.with(this)
+                .asBitmap()
+                .load(uri)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        binding.photoEditorView.getSource().setImageBitmap(resource);
+                        loadingDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        loadingDialog.dismiss();
+                        Toast.makeText(EditorActivity.this, "Lỗi khi tải ảnh", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                });
     }
 
     private void setupAdjustControls() {
