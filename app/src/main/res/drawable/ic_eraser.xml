@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF"> <!-- Bạn có thể đổi màu tại đây -->
+
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15.14,3C14.63,3 14.12,3.2 13.73,3.59L2.59,14.73C1.81,15.51 1.81,16.77 2.59,17.56L5.03,20H12.69L21.41,11.27C22.2,10.49 22.2,9.23 21.41,8.44L16.56,3.59C16.17,3.2 15.65,3 15.14,3M15.14,5L20,9.86L16.58,13.28L11.72,8.42L15.14,5M10.31,9.84L15.17,14.7L12.44,17.43C12.05,17.82 11.54,18.02 11.03,18.02H6.69L10.31,9.84Z" />
+
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M19,20H14L12,22H19A2,2 0 0,0 21,20C21,18.9 20.1,18 19,18V20Z" />
+</vector>

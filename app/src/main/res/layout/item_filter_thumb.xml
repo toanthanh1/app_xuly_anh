@@ -15,7 +15,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:contentDescription="@null"
-        android:scaleType="centerCrop" />
+        android:scaleType="fitCenter" />
 
     <TextView
         android:id="@+id/filterName"
