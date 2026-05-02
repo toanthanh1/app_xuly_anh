@@ -22,6 +22,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.databinding.ActivityEditorBinding;
 
 import ja.burhanrashid52.photoeditor.PhotoEditor;
 import ja.burhanrashid52.photoeditor.PhotoEditorView;
@@ -29,44 +30,40 @@ import ja.burhanrashid52.photoeditor.PhotoEditorView;
 public class StickerManager {
 
     private final AppCompatActivity activity;
+    private final ActivityEditorBinding binding;
     private final PhotoEditor photoEditor;
-    private final LinearLayout stickerPanel;
-    private final LinearLayout stickerCategoryTabs;
-    private final LinearLayout stickerList;
     private TextView selectedCategoryTabView;
 
-    public StickerManager(AppCompatActivity activity, PhotoEditor photoEditor) {
+    public StickerManager(AppCompatActivity activity, ActivityEditorBinding binding, PhotoEditor photoEditor) {
         this.activity = activity;
+        this.binding = binding;
         this.photoEditor = photoEditor;
-        this.stickerPanel = activity.findViewById(R.id.stickerPanel);
-        this.stickerCategoryTabs = activity.findViewById(R.id.stickerCategoryTabs);
-        this.stickerList = activity.findViewById(R.id.stickerList);
 
-        activity.findViewById(R.id.btnStickerDone).setOnClickListener(v -> closeStickerPanel());
+        binding.btnStickerDone.setOnClickListener(v -> closeStickerPanel());
     }
 
     public void openStickerPanel() {
         populateCategoryTabs();
-        selectCategory(CATEGORIES[0], (TextView) stickerCategoryTabs.getChildAt(0));
-        stickerPanel.setVisibility(View.VISIBLE);
+        selectCategory(CATEGORIES[0], (TextView) binding.stickerCategoryTabs.getChildAt(0));
+        binding.stickerPanel.setVisibility(View.VISIBLE);
     }
 
     public void closeStickerPanel() {
-        stickerPanel.setVisibility(View.GONE);
+        binding.stickerPanel.setVisibility(View.GONE);
     }
 
     public boolean isPanelVisible() {
-        return stickerPanel.getVisibility() == View.VISIBLE;
+        return binding.stickerPanel.getVisibility() == View.VISIBLE;
     }
 
     private void populateCategoryTabs() {
-        stickerCategoryTabs.removeAllViews();
+        binding.stickerCategoryTabs.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(activity);
         for (StickerCategory category : CATEGORIES) {
-            TextView tab = (TextView) inflater.inflate(R.layout.item_filter_category_tab, stickerCategoryTabs, false);
+            TextView tab = (TextView) inflater.inflate(R.layout.item_filter_category_tab, binding.stickerCategoryTabs, false);
             tab.setText(category.name);
             tab.setOnClickListener(v -> selectCategory(category, tab));
-            stickerCategoryTabs.addView(tab);
+            binding.stickerCategoryTabs.addView(tab);
         }
     }
 
@@ -80,13 +77,13 @@ public class StickerManager {
     }
 
     private void populateStickers(StickerCategory category) {
-        stickerList.removeAllViews();
+        binding.stickerList.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(activity);
         
         int targetWidth = calculateTargetWidth();
 
         for (int stickerResId : category.stickerResIds) {
-            View item = inflater.inflate(R.layout.item_filter_thumb, stickerList, false);
+            View item = inflater.inflate(R.layout.item_filter_thumb, binding.stickerList, false);
             ImageView thumb = item.findViewById(R.id.filterThumb);
             TextView name = item.findViewById(R.id.filterName);
             name.setVisibility(View.GONE);
@@ -117,14 +114,13 @@ public class StickerManager {
                             public void onLoadCleared(@Nullable Drawable placeholder) {}
                         });
             });
-            stickerList.addView(item);
+            binding.stickerList.addView(item);
         }
     }
 
     private int calculateTargetWidth() {
-        PhotoEditorView peView = activity.findViewById(R.id.photoEditorView);
-        if (peView != null && peView.getSource().getDrawable() != null) {
-            int imageWidth = peView.getSource().getDrawable().getIntrinsicWidth();
+        if (binding.photoEditorView.getSource().getDrawable() != null) {
+            int imageWidth = binding.photoEditorView.getSource().getDrawable().getIntrinsicWidth();
             // Thu nhỏ sticker xuống 1/6 chiều rộng ảnh để không quá to
             return Math.max(150, imageWidth / 6);
         }

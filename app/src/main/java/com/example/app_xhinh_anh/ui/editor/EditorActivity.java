@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
@@ -20,9 +19,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,7 +28,6 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -49,9 +45,6 @@ import com.example.app_xhinh_anh.features.ai_assistant.domain.ActionMapper;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage;
 import com.example.app_xhinh_anh.features.ai_assistant.ui.adapter.ChatAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import android.widget.ProgressBar;
-import android.widget.EditText;
 import android.view.inputmethod.InputMethodManager;
 import android.content.Context;
 
@@ -59,38 +52,32 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ja.burhanrashid52.photoeditor.OnPhotoEditorListener;
 import ja.burhanrashid52.photoeditor.PhotoEditor;
-import ja.burhanrashid52.photoeditor.PhotoEditorView;
 import ja.burhanrashid52.photoeditor.SaveSettings;
 import ja.burhanrashid52.photoeditor.ViewType;
 
 import com.example.app_xhinh_anh.processing.ai.AiProcessor;
 import com.example.app_xhinh_anh.processing.ai.BackgroundRemoverAi;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
-import android.app.ProgressDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import android.app.Dialog;
+
+import com.example.app_xhinh_anh.databinding.ActivityEditorBinding;
+import com.example.app_xhinh_anh.processing.ImageProcessor;
 
 public class EditorActivity extends AppCompatActivity {
 
     private static final String TAG = "EditorActivity";
 
-    private PhotoEditorView photoEditorView;
+    private ActivityEditorBinding binding;
     private PhotoEditor photoEditor;
     private Uri currentImageUri;
-    private ImageButton btnUndo, btnRedo;
     private final Stack<Bitmap> undoBitmapStack = new Stack<>();
     private final Stack<Bitmap> redoBitmapStack = new Stack<>();
 
-    private LinearLayout adjustPanel;
-    private SeekBar seekAdjust;
-    private TextView adjustValueText;
-    private LinearLayout tabBrightness, tabContrast, tabSaturation, tabSharpness, tabClarity, tabHsl,
-            tabCurves, tabHighlights, tabShadows;
-    private ImageView iconBrightness, iconContrast, iconSaturation, iconSharpness, iconClarity, iconHsl,
-            iconCurves, iconHighlights, iconShadows;
-    private TextView labelBrightness, labelContrast, labelSaturation, labelSharpness, labelClarity, labelHsl,
-            labelCurves, labelHighlights, labelShadows;
     private Bitmap adjustBaseBitmap;
     private Bitmap adjustBasePreview;
     private Bitmap adjustConvBitmap;
@@ -117,27 +104,17 @@ public class EditorActivity extends AppCompatActivity {
     private int shadowsValue = 0;
 
     private BackgroundRemoverAi backgroundRemoverAi;
+    private final ExecutorService processingExecutor = Executors.newSingleThreadExecutor();
 
-    // ==== Filter panel (Trắng đen / Hoài cổ / Cổ điển / Hits / Portrait / Texture) ====
-    private LinearLayout filterPanel;
-    private LinearLayout filterCategoryTabs;
-    private LinearLayout filterVariantsList;
-    private TextView filterIntensityValueText;
-    private SeekBar filterIntensitySeek;
-    private Bitmap filterBaseBitmap;
-    private Bitmap filterThumbBitmap;
     private TextView selectedCategoryTabView;
     private FilterPreset selectedVariant;
     private View selectedVariantView;
     private int filterIntensity = 100;
+    private Bitmap filterBaseBitmap;
+    private Bitmap filterThumbBitmap;
 
     // AI Assistant
-    private LinearLayout chatPanel;
-    private RecyclerView rvChatHistory;
     private ChatAdapter chatAdapter;
-    private EditText etChatInput;
-    private ImageButton btnSendChat;
-    private ProgressBar pbAiThinking;
     private GeminiApiClient geminiApiClient;
 
     // Managers
@@ -149,26 +126,22 @@ public class EditorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_editor);
+        binding = ActivityEditorBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-        toolbar.setNavigationOnClickListener(v -> finish());
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
 
-        photoEditorView = findViewById(R.id.photoEditorView);
-        btnUndo = findViewById(R.id.btnUndo);
-        btnRedo = findViewById(R.id.btnRedo);
-
-        photoEditor = new PhotoEditor.Builder(this, photoEditorView)
+        photoEditor = new PhotoEditor.Builder(this, binding.photoEditorView)
                 .setPinchTextScalable(true)
                 .setClipSourceImage(true)
                 .build();
         setupPhotoEditorListener();
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, Math.max(systemBars.bottom, ime.bottom));
@@ -177,10 +150,10 @@ public class EditorActivity extends AppCompatActivity {
 
         initViews();
 
-        etChatInput.setOnFocusChangeListener((v, hasFocus) -> {
+        binding.etChatInput.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus && chatAdapter != null && chatAdapter.getItemCount() > 0) {
-                rvChatHistory.postDelayed(() -> {
-                    rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                binding.rvChatHistory.postDelayed(() -> {
+                    binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                 }, 300);
             }
         });
@@ -188,19 +161,18 @@ public class EditorActivity extends AppCompatActivity {
         String imageUriString = getIntent().getStringExtra("image_uri");
         if (imageUriString != null) {
             currentImageUri = Uri.parse(imageUriString);
-            photoEditorView.getSource().setImageURI(currentImageUri);
+            binding.photoEditorView.getSource().setImageURI(currentImageUri);
         }
-
     }
 
-    private void setupAdjustControls(View btnAdjust, Button btnAdjustReset, Button btnAdjustApply) {
-        btnAdjust.setOnClickListener(v -> {
-            if (adjustPanel.getVisibility() == View.VISIBLE) {
+    private void setupAdjustControls() {
+        binding.btnAdjust.setOnClickListener(v -> {
+            if (binding.adjustPanel.getVisibility() == View.VISIBLE) {
                 closeAdjustPanel(false);
                 return;
             }
             hideAllPanels();
-            if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
+            if (!(binding.photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
                 Toast.makeText(this, "Chưa có ảnh để chỉnh", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -209,16 +181,16 @@ public class EditorActivity extends AppCompatActivity {
             photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
                 @Override
                 public void onBitmapReady(@NonNull Bitmap bitmap) {
-                    adjustBaseBitmap = copyBitmap(bitmap);
-                    adjustBasePreview = makePreviewBitmap(adjustBaseBitmap, PREVIEW_MAX_DIM);
+                    adjustBaseBitmap = ImageProcessor.copyBitmap(bitmap);
+                    adjustBasePreview = ImageProcessor.makePreviewBitmap(adjustBaseBitmap, PREVIEW_MAX_DIM);
                     adjustConvBitmap = adjustBasePreview;
                     resetAdjustValues();
                     
                     photoEditor.clearAllViews();
-                    photoEditorView.getSource().setImageBitmap(adjustConvBitmap);
-                    photoEditorView.getSource().clearColorFilter();
+                    binding.photoEditorView.getSource().setImageBitmap(adjustConvBitmap);
+                    binding.photoEditorView.getSource().clearColorFilter();
                     selectAdjustMode(MODE_BRIGHTNESS);
-                    adjustPanel.setVisibility(View.VISIBLE);
+                    binding.adjustPanel.setVisibility(View.VISIBLE);
                 }
                 @Override public void onFailure(@NonNull Exception e) {
                     Toast.makeText(EditorActivity.this, "Lỗi chuẩn bị ảnh", Toast.LENGTH_SHORT).show();
@@ -226,21 +198,21 @@ public class EditorActivity extends AppCompatActivity {
             });
         });
 
-        tabBrightness.setOnClickListener(v -> selectAdjustMode(MODE_BRIGHTNESS));
-        tabContrast.setOnClickListener(v -> selectAdjustMode(MODE_CONTRAST));
-        tabSaturation.setOnClickListener(v -> selectAdjustMode(MODE_SATURATION));
-        tabSharpness.setOnClickListener(v -> selectAdjustMode(MODE_SHARPNESS));
-        tabClarity.setOnClickListener(v -> selectAdjustMode(MODE_CLARITY));
-        tabHsl.setOnClickListener(v -> selectAdjustMode(MODE_HSL));
-        tabCurves.setOnClickListener(v -> selectAdjustMode(MODE_CURVES));
-        tabHighlights.setOnClickListener(v -> selectAdjustMode(MODE_HIGHLIGHTS));
-        tabShadows.setOnClickListener(v -> selectAdjustMode(MODE_SHADOWS));
+        binding.tabBrightness.setOnClickListener(v -> selectAdjustMode(MODE_BRIGHTNESS));
+        binding.tabContrast.setOnClickListener(v -> selectAdjustMode(MODE_CONTRAST));
+        binding.tabSaturation.setOnClickListener(v -> selectAdjustMode(MODE_SATURATION));
+        binding.tabSharpness.setOnClickListener(v -> selectAdjustMode(MODE_SHARPNESS));
+        binding.tabClarity.setOnClickListener(v -> selectAdjustMode(MODE_CLARITY));
+        binding.tabHsl.setOnClickListener(v -> selectAdjustMode(MODE_HSL));
+        binding.tabCurves.setOnClickListener(v -> selectAdjustMode(MODE_CURVES));
+        binding.tabHighlights.setOnClickListener(v -> selectAdjustMode(MODE_HIGHLIGHTS));
+        binding.tabShadows.setOnClickListener(v -> selectAdjustMode(MODE_SHADOWS));
 
-        seekAdjust.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        binding.seekAdjust.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 int value = progress - 50;
-                adjustValueText.setText(String.valueOf(value));
+                binding.adjustValueText.setText(String.valueOf(value));
                 if (adjustBaseBitmap == null) return;
                 switch (currentAdjustMode) {
                     case MODE_CONTRAST: contrastValue = value; break;
@@ -262,28 +234,28 @@ public class EditorActivity extends AppCompatActivity {
             @Override public void onStopTrackingTouch(SeekBar sb) {}
         });
 
-        btnAdjustReset.setOnClickListener(v -> {
+        binding.btnAdjustReset.setOnClickListener(v -> {
             resetAdjustValues();
-            seekAdjust.setProgress(50);
-            adjustValueText.setText("0");
+            binding.seekAdjust.setProgress(50);
+            binding.adjustValueText.setText("0");
             if (adjustBasePreview != null) {
                 adjustConvBitmap = adjustBasePreview;
-                photoEditorView.getSource().setImageBitmap(adjustConvBitmap);
-                photoEditorView.getSource().clearColorFilter();
+                binding.photoEditorView.getSource().setImageBitmap(adjustConvBitmap);
+                binding.photoEditorView.getSource().clearColorFilter();
             }
         });
 
-        btnAdjustApply.setOnClickListener(v -> {
+        binding.btnAdjustApply.setOnClickListener(v -> {
             bakeAdjustments();
             closeAdjustPanel(true);
         });
     }
 
     private void closeAdjustPanel(boolean isApplied) {
-        adjustPanel.setVisibility(View.GONE);
-        photoEditorView.getSource().clearColorFilter();
+        binding.adjustPanel.setVisibility(View.GONE);
+        binding.photoEditorView.getSource().clearColorFilter();
         if (!isApplied && adjustBaseBitmap != null) {
-            photoEditorView.getSource().setImageBitmap(adjustBaseBitmap);
+            binding.photoEditorView.getSource().setImageBitmap(adjustBaseBitmap);
         }
         adjustBaseBitmap = null;
         adjustBasePreview = null;
@@ -295,41 +267,29 @@ public class EditorActivity extends AppCompatActivity {
                 || mode == MODE_CURVES || mode == MODE_HIGHLIGHTS || mode == MODE_SHADOWS;
     }
 
-    private Bitmap makePreviewBitmap(Bitmap src, int maxDim) {
-        int w = src.getWidth();
-        int h = src.getHeight();
-        int largest = Math.max(w, h);
-        if (largest <= maxDim) return src;
-        float ratio = (float) maxDim / largest;
-        return Bitmap.createScaledBitmap(src,
-                Math.max(1, Math.round(w * ratio)),
-                Math.max(1, Math.round(h * ratio)),
-                true);
-    }
-
     private void selectAdjustMode(int mode) {
         currentAdjustMode = mode;
         int active = ContextCompat.getColor(this, R.color.brand_green);
         int inactive = ContextCompat.getColor(this, R.color.white);
 
-        iconBrightness.setColorFilter(mode == MODE_BRIGHTNESS ? active : inactive);
-        labelBrightness.setTextColor(mode == MODE_BRIGHTNESS ? active : inactive);
-        iconContrast.setColorFilter(mode == MODE_CONTRAST ? active : inactive);
-        labelContrast.setTextColor(mode == MODE_CONTRAST ? active : inactive);
-        iconSaturation.setColorFilter(mode == MODE_SATURATION ? active : inactive);
-        labelSaturation.setTextColor(mode == MODE_SATURATION ? active : inactive);
-        iconSharpness.setColorFilter(mode == MODE_SHARPNESS ? active : inactive);
-        labelSharpness.setTextColor(mode == MODE_SHARPNESS ? active : inactive);
-        iconClarity.setColorFilter(mode == MODE_CLARITY ? active : inactive);
-        labelClarity.setTextColor(mode == MODE_CLARITY ? active : inactive);
-        iconHsl.setColorFilter(mode == MODE_HSL ? active : inactive);
-        labelHsl.setTextColor(mode == MODE_HSL ? active : inactive);
-        iconCurves.setColorFilter(mode == MODE_CURVES ? active : inactive);
-        labelCurves.setTextColor(mode == MODE_CURVES ? active : inactive);
-        iconHighlights.setColorFilter(mode == MODE_HIGHLIGHTS ? active : inactive);
-        labelHighlights.setTextColor(mode == MODE_HIGHLIGHTS ? active : inactive);
-        iconShadows.setColorFilter(mode == MODE_SHADOWS ? active : inactive);
-        labelShadows.setTextColor(mode == MODE_SHADOWS ? active : inactive);
+        binding.iconBrightness.setColorFilter(mode == MODE_BRIGHTNESS ? active : inactive);
+        binding.labelBrightness.setTextColor(mode == MODE_BRIGHTNESS ? active : inactive);
+        binding.iconContrast.setColorFilter(mode == MODE_CONTRAST ? active : inactive);
+        binding.labelContrast.setTextColor(mode == MODE_CONTRAST ? active : inactive);
+        binding.iconSaturation.setColorFilter(mode == MODE_SATURATION ? active : inactive);
+        binding.labelSaturation.setTextColor(mode == MODE_SATURATION ? active : inactive);
+        binding.iconSharpness.setColorFilter(mode == MODE_SHARPNESS ? active : inactive);
+        binding.labelSharpness.setTextColor(mode == MODE_SHARPNESS ? active : inactive);
+        binding.iconClarity.setColorFilter(mode == MODE_CLARITY ? active : inactive);
+        binding.labelClarity.setTextColor(mode == MODE_CLARITY ? active : inactive);
+        binding.iconHsl.setColorFilter(mode == MODE_HSL ? active : inactive);
+        binding.labelHsl.setTextColor(mode == MODE_HSL ? active : inactive);
+        binding.iconCurves.setColorFilter(mode == MODE_CURVES ? active : inactive);
+        binding.labelCurves.setTextColor(mode == MODE_CURVES ? active : inactive);
+        binding.iconHighlights.setColorFilter(mode == MODE_HIGHLIGHTS ? active : inactive);
+        binding.labelHighlights.setTextColor(mode == MODE_HIGHLIGHTS ? active : inactive);
+        binding.iconShadows.setColorFilter(mode == MODE_SHADOWS ? active : inactive);
+        binding.labelShadows.setTextColor(mode == MODE_SHADOWS ? active : inactive);
 
         int value;
         switch (mode) {
@@ -343,8 +303,8 @@ public class EditorActivity extends AppCompatActivity {
             case MODE_SHADOWS: value = shadowsValue; break;
             default: value = brightnessValue;
         }
-        seekAdjust.setProgress(value + 50);
-        adjustValueText.setText(String.valueOf(value));
+        binding.seekAdjust.setProgress(value + 50);
+        binding.adjustValueText.setText(String.valueOf(value));
     }
 
     private void resetAdjustValues() {
@@ -361,7 +321,7 @@ public class EditorActivity extends AppCompatActivity {
 
     private void applyColorAdjustments() {
         if (adjustBaseBitmap == null) return;
-        photoEditorView.getSource().setColorFilter(
+        binding.photoEditorView.getSource().setColorFilter(
                 new ColorMatrixColorFilter(buildColorMatrix()));
     }
 
@@ -377,7 +337,7 @@ public class EditorActivity extends AppCompatActivity {
         cm.postConcat(saturationMatrix);
 
         if (hueDegrees != 0f) {
-            cm.postConcat(buildHueMatrix(hueDegrees));
+            cm.postConcat(ImageProcessor.buildHueMatrix(hueDegrees));
         }
 
         float translate = (-.5f * contrast + .5f) * 255f;
@@ -400,110 +360,81 @@ public class EditorActivity extends AppCompatActivity {
 
     private void rebuildConvolutionBitmap() {
         if (adjustBasePreview == null) return;
-        adjustConvBitmap = applyHeavyPipeline(adjustBasePreview);
-        photoEditorView.getSource().setImageBitmap(adjustConvBitmap);
+        final Bitmap src = adjustBasePreview;
+        
+        processingExecutor.execute(() -> {
+            final Bitmap result = applyHeavyPipeline(src);
+            runOnUiThread(() -> {
+                adjustConvBitmap = result;
+                binding.photoEditorView.getSource().setImageBitmap(adjustConvBitmap);
+            });
+        });
     }
 
     private Bitmap applyHeavyPipeline(Bitmap src) {
         Bitmap out = src;
         if (curvesValue != 0 || highlightsValue != 0 || shadowsValue != 0) {
-            int[] lut = buildToneLut(
+            int[] lut = ImageProcessor.buildToneLut(
                     curvesValue / 50f,
                     highlightsValue / 50f,
                     shadowsValue / 50f);
-            out = applyLut(out, lut);
+            out = ImageProcessor.applyLut(out, lut);
         }
         if (sharpnessValue != 0) {
-            out = applySharpness(out, sharpnessValue / 50f);
+            out = ImageProcessor.applySharpness(out, sharpnessValue / 50f);
         }
         if (clarityValue != 0) {
-            out = applyClarity(out, clarityValue / 50f);
+            out = ImageProcessor.applyClarity(out, clarityValue / 50f);
         }
-        return out;
-    }
-
-    private int[] buildToneLut(float curves, float highlights, float shadows) {
-        int[] lut = new int[256];
-        for (int i = 0; i < 256; i++) {
-            float x = i / 255f;
-            float y = x;
-            if (curves != 0f) {
-                float ss = x * x * (3f - 2f * x);
-                y = y + curves * (ss - x);
-            }
-            if (highlights != 0f) {
-                float maskH = Math.max(0f, 2f * x - 1f);
-                y = y + highlights * 0.4f * maskH;
-            }
-            if (shadows != 0f) {
-                float maskS = Math.max(0f, 1f - 2f * x);
-                y = y + shadows * 0.4f * maskS;
-            }
-            lut[i] = clampByte(Math.round(y * 255f));
-        }
-        return lut;
-    }
-
-    private Bitmap applyLut(Bitmap src, int[] lut) {
-        int w = src.getWidth();
-        int h = src.getHeight();
-        int[] pixels = new int[w * h];
-        src.getPixels(pixels, 0, w, 0, 0, w, h);
-        for (int i = 0; i < pixels.length; i++) {
-            int p = pixels[i];
-            int a = (p >> 24) & 0xff;
-            int r = lut[(p >> 16) & 0xff];
-            int g = lut[(p >> 8) & 0xff];
-            int b = lut[p & 0xff];
-            pixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
-        }
-        Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        out.setPixels(pixels, 0, w, 0, 0, w, h);
         return out;
     }
 
     private void bakeAdjustments() {
         if (adjustBaseBitmap == null) return;
-        Bitmap full = applyHeavyPipeline(adjustBaseBitmap);
-        boolean hasColorMatrix = brightnessValue != 0 || contrastValue != 0
-                || saturationValue != 0 || hslValue != 0;
-        Bitmap finalBitmap;
-        if (hasColorMatrix) {
-            finalBitmap = Bitmap.createBitmap(full.getWidth(), full.getHeight(),
-                    Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(finalBitmap);
-            Paint paint = new Paint();
-            paint.setColorFilter(new ColorMatrixColorFilter(buildColorMatrix()));
-            canvas.drawBitmap(full, 0, 0, paint);
-        } else {
-            finalBitmap = full;
-        }
-        photoEditorView.getSource().clearColorFilter();
-        photoEditorView.getSource().setImageBitmap(finalBitmap);
+        
+        Dialog loadingDialog = showLoadingDialog("Đang áp dụng thay đổi...");
+        
+        processingExecutor.execute(() -> {
+            Bitmap full = applyHeavyPipeline(adjustBaseBitmap);
+            boolean hasColorMatrix = brightnessValue != 0 || contrastValue != 0
+                    || saturationValue != 0 || hslValue != 0;
+            Bitmap finalBitmap;
+            if (hasColorMatrix) {
+                finalBitmap = ImageProcessor.applyColorMatrix(full, buildColorMatrix());
+            } else {
+                finalBitmap = full;
+            }
+            
+            runOnUiThread(() -> {
+                binding.photoEditorView.getSource().clearColorFilter();
+                binding.photoEditorView.getSource().setImageBitmap(finalBitmap);
+                loadingDialog.dismiss();
+            });
+        });
     }
 
-    private void setupFilterControls(Button btnFilterReset, Button btnFilterApply) {
-        filterIntensitySeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+    private void setupFilterControls() {
+        binding.filterIntensitySeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 filterIntensity = progress;
-                filterIntensityValueText.setText(String.valueOf(progress));
+                binding.filterIntensityValueText.setText(String.valueOf(progress));
                 applyFilterPreview();
             }
             @Override public void onStartTrackingTouch(SeekBar sb) {}
             @Override public void onStopTrackingTouch(SeekBar sb) {}
         });
 
-        btnFilterReset.setOnClickListener(v -> clearVariantSelection());
+        binding.btnFilterReset.setOnClickListener(v -> clearVariantSelection());
 
-        btnFilterApply.setOnClickListener(v -> {
+        binding.btnFilterApply.setOnClickListener(v -> {
             bakeFilter();
             closeFilterPanel(true);
         });
     }
 
     private void openFilterPanel() {
-        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
+        if (!(binding.photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
             Toast.makeText(this, "Chưa có ảnh để chỉnh", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -513,22 +444,22 @@ public class EditorActivity extends AppCompatActivity {
         photoEditor.saveAsBitmap(new ja.burhanrashid52.photoeditor.OnSaveBitmap() {
             @Override
             public void onBitmapReady(@NonNull Bitmap bitmap) {
-                filterBaseBitmap = copyBitmap(bitmap);
+                filterBaseBitmap = ImageProcessor.copyBitmap(bitmap);
                 int thumbDim = Math.round(128f * getResources().getDisplayMetrics().density);
-                filterThumbBitmap = makePreviewBitmap(filterBaseBitmap, thumbDim);
+                filterThumbBitmap = ImageProcessor.makePreviewBitmap(filterBaseBitmap, thumbDim);
 
                 photoEditor.clearAllViews();
-                photoEditorView.getSource().setImageBitmap(filterBaseBitmap);
+                binding.photoEditorView.getSource().setImageBitmap(filterBaseBitmap);
 
                 populateCategoryTabs();
-                selectCategory(FilterPreset.CATEGORIES[0], (TextView) filterCategoryTabs.getChildAt(0));
+                selectCategory(FilterPreset.CATEGORIES[0], (TextView) binding.filterCategoryTabs.getChildAt(0));
 
                 filterIntensity = 100;
-                filterIntensitySeek.setProgress(100);
-                filterIntensityValueText.setText("100");
-                photoEditorView.getSource().clearColorFilter();
+                binding.filterIntensitySeek.setProgress(100);
+                binding.filterIntensityValueText.setText("100");
+                binding.photoEditorView.getSource().clearColorFilter();
 
-                filterPanel.setVisibility(View.VISIBLE);
+                binding.filterPanel.setVisibility(View.VISIBLE);
             }
             @Override public void onFailure(@NonNull Exception e) {
                 Toast.makeText(EditorActivity.this, "Lỗi chuẩn bị ảnh", Toast.LENGTH_SHORT).show();
@@ -537,29 +468,29 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void closeFilterPanel(boolean isApplied) {
-        filterPanel.setVisibility(View.GONE);
-        photoEditorView.getSource().clearColorFilter();
+        binding.filterPanel.setVisibility(View.GONE);
+        binding.photoEditorView.getSource().clearColorFilter();
         if (selectedVariantView != null) selectedVariantView.setBackground(null);
         selectedVariantView = null;
         selectedVariant = null;
         selectedCategoryTabView = null;
         if (!isApplied && filterBaseBitmap != null) {
-            photoEditorView.getSource().setImageBitmap(filterBaseBitmap);
+            binding.photoEditorView.getSource().setImageBitmap(filterBaseBitmap);
         }
         filterBaseBitmap = null;
         filterThumbBitmap = null;
     }
 
     private void populateCategoryTabs() {
-        filterCategoryTabs.removeAllViews();
+        binding.filterCategoryTabs.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
         for (FilterPreset.Category category : FilterPreset.CATEGORIES) {
             final FilterPreset.Category cat = category;
             TextView tab = (TextView) inflater.inflate(R.layout.item_filter_category_tab,
-                    filterCategoryTabs, false);
+                    binding.filterCategoryTabs, false);
             tab.setText(cat.name);
             tab.setOnClickListener(v -> selectCategory(cat, tab));
-            filterCategoryTabs.addView(tab);
+            binding.filterCategoryTabs.addView(tab);
         }
     }
 
@@ -574,21 +505,21 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void populateVariants(FilterPreset.Category category) {
-        filterVariantsList.removeAllViews();
+        binding.filterVariantsList.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
         for (FilterPreset preset : category.variants) {
             final FilterPreset variant = preset;
-            View item = inflater.inflate(R.layout.item_filter_thumb, filterVariantsList, false);
+            View item = inflater.inflate(R.layout.item_filter_thumb, binding.filterVariantsList, false);
             ImageView thumb = item.findViewById(R.id.filterThumb);
             TextView name = item.findViewById(R.id.filterName);
             if (variant.matrix != null) {
-                thumb.setImageBitmap(applyMatrixToBitmap(filterThumbBitmap, variant.matrix));
+                thumb.setImageBitmap(ImageProcessor.applyColorMatrix(filterThumbBitmap, variant.matrix));
             } else {
                 thumb.setImageBitmap(filterThumbBitmap);
             }
             name.setText(variant.displayName);
             item.setOnClickListener(v -> selectVariant(variant, item));
-            filterVariantsList.addView(item);
+            binding.filterVariantsList.addView(item);
         }
     }
 
@@ -609,148 +540,34 @@ public class EditorActivity extends AppCompatActivity {
         selectedVariantView = null;
         selectedVariant = null;
         filterIntensity = 100;
-        filterIntensitySeek.setProgress(100);
-        filterIntensityValueText.setText("100");
-        photoEditorView.getSource().clearColorFilter();
+        binding.filterIntensitySeek.setProgress(100);
+        binding.filterIntensityValueText.setText("100");
+        binding.photoEditorView.getSource().clearColorFilter();
     }
 
     private void applyFilterPreview() {
         if (selectedVariant == null || selectedVariant.matrix == null || filterBaseBitmap == null) {
-            photoEditorView.getSource().clearColorFilter();
+            binding.photoEditorView.getSource().clearColorFilter();
             return;
         }
         float t = filterIntensity / 100f;
-        photoEditorView.getSource().setColorFilter(
-                new ColorMatrixColorFilter(lerpToIdentity(selectedVariant.matrix, t)));
+        binding.photoEditorView.getSource().setColorFilter(
+                new ColorMatrixColorFilter(ImageProcessor.lerpToIdentity(selectedVariant.matrix, t)));
     }
 
     private void bakeFilter() {
         if (selectedVariant == null || selectedVariant.matrix == null || filterBaseBitmap == null) return;
         float t = filterIntensity / 100f;
-        Bitmap full = applyMatrixToBitmap(filterBaseBitmap, lerpToIdentity(selectedVariant.matrix, t));
-        photoEditorView.getSource().clearColorFilter();
-        photoEditorView.getSource().setImageBitmap(full);
-    }
-
-    private float[] lerpToIdentity(float[] target, float t) {
-        float[] identity = {
-                1f, 0f, 0f, 0f, 0f,
-                0f, 1f, 0f, 0f, 0f,
-                0f, 0f, 1f, 0f, 0f,
-                0f, 0f, 0f, 1f, 0f
-        };
-        float[] r = new float[20];
-        for (int i = 0; i < 20; i++) {
-            r[i] = identity[i] + t * (target[i] - identity[i]);
-        }
-        return r;
-    }
-
-    private Bitmap applyMatrixToBitmap(Bitmap src, float[] matrix) {
-        Bitmap out = Bitmap.createBitmap(src.getWidth(), src.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(out);
-        Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
-        paint.setColorFilter(new ColorMatrixColorFilter(matrix));
-        canvas.drawBitmap(src, 0, 0, paint);
-        return out;
-    }
-
-    private ColorMatrix buildHueMatrix(float degrees) {
-        float r = (float) Math.toRadians(degrees);
-        float c = (float) Math.cos(r);
-        float s = (float) Math.sin(r);
-        float lr = 0.213f, lg = 0.715f, lb = 0.072f;
-        return new ColorMatrix(new float[]{
-                lr + c * (1 - lr) + s * (-lr),       lg + c * (-lg) + s * (-lg),       lb + c * (-lb) + s * (1 - lb), 0, 0,
-                lr + c * (-lr) + s * (0.143f),       lg + c * (1 - lg) + s * (0.140f), lb + c * (-lb) + s * (-0.283f), 0, 0,
-                lr + c * (-lr) + s * (-(1 - lr)),    lg + c * (-lg) + s * (lg),        lb + c * (1 - lb) + s * (lb),  0, 0,
-                0, 0, 0, 1, 0
-        });
-    }
-
-    private Bitmap applySharpness(Bitmap src, float strength) {
-        if (Math.abs(strength) < 0.01f) return src;
-        float[] kernel;
-        if (strength > 0) {
-            float s = strength;
-            kernel = new float[]{
-                    0,    -s,        0,
-                    -s,   1 + 4 * s, -s,
-                    0,    -s,        0
-            };
-        } else {
-            float w = -strength;
-            float side = w / 9f;
-            kernel = new float[]{
-                    side, side,           side,
-                    side, 1f - 8 * side,  side,
-                    side, side,           side
-            };
-        }
-        return applyConvolution(src, kernel, 3);
-    }
-
-    private Bitmap applyClarity(Bitmap src, float strength) {
-        if (Math.abs(strength) < 0.01f) return src;
-        float s = strength;
-        float[] kernel = new float[]{
-                -s * 0.5f, -s,            -s * 0.5f,
-                -s,        1 + 6 * s,     -s,
-                -s * 0.5f, -s,            -s * 0.5f
-        };
-        return applyConvolution(src, kernel, 3);
-    }
-
-    private Bitmap applyConvolution(Bitmap src, float[] kernel, int kSize) {
-        int w = src.getWidth();
-        int h = src.getHeight();
-        int[] pixels = new int[w * h];
-        int[] result = new int[w * h];
-        src.getPixels(pixels, 0, w, 0, 0, w, h);
-        int half = kSize / 2;
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                float r = 0, g = 0, b = 0;
-                for (int ky = 0; ky < kSize; ky++) {
-                    int py = y + ky - half;
-                    if (py < 0) py = 0; else if (py >= h) py = h - 1;
-                    for (int kx = 0; kx < kSize; kx++) {
-                        int px = x + kx - half;
-                        if (px < 0) px = 0; else if (px >= w) px = w - 1;
-                        int p = pixels[py * w + px];
-                        float k = kernel[ky * kSize + kx];
-                        r += ((p >> 16) & 0xff) * k;
-                        g += ((p >> 8) & 0xff) * k;
-                        b += (p & 0xff) * k;
-                    }
-                }
-                int a = (pixels[y * w + x] >> 24) & 0xff;
-                result[y * w + x] = (a << 24)
-                        | (clampByte((int) r) << 16)
-                        | (clampByte((int) g) << 8)
-                        | clampByte((int) b);
-            }
-        }
-        Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        out.setPixels(result, 0, w, 0, 0, w, h);
-        return out;
-    }
-
-    private int clampByte(int v) {
-        return Math.max(0, Math.min(255, v));
-    }
-
-    private Bitmap copyBitmap(Bitmap src) {
-        Bitmap.Config config = src.getConfig();
-        if (config == null) config = Bitmap.Config.ARGB_8888;
-        return src.copy(config, true);
+        Bitmap full = ImageProcessor.applyColorMatrix(filterBaseBitmap, ImageProcessor.lerpToIdentity(selectedVariant.matrix, t));
+        binding.photoEditorView.getSource().clearColorFilter();
+        binding.photoEditorView.getSource().setImageBitmap(full);
     }
 
     private void saveBitmapState() {
-        if (photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
-            Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        if (binding.photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
+            Bitmap current = ((BitmapDrawable) binding.photoEditorView.getSource().getDrawable()).getBitmap();
             if (current != null) {
-                undoBitmapStack.push(copyBitmap(current));
+                undoBitmapStack.push(ImageProcessor.copyBitmap(current));
                 redoBitmapStack.clear();
             }
         }
@@ -775,69 +592,18 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        photoEditorView = findViewById(R.id.photoEditorView);
-        LinearLayout btnCrop = findViewById(R.id.btnCrop);
-        LinearLayout btnFlip = findViewById(R.id.btnFlip);
-        LinearLayout btnAdjust = findViewById(R.id.btnAdjust);
-        LinearLayout btnFilter = findViewById(R.id.btnFilter);
-        LinearLayout btnBrush = findViewById(R.id.btnBrush);
-        LinearLayout btnAddText = findViewById(R.id.btnAddText);
-        LinearLayout btnSticker = findViewById(R.id.btnSticker);
-
-        adjustPanel = findViewById(R.id.adjustPanel);
-        seekAdjust = findViewById(R.id.seekAdjust);
-        adjustValueText = findViewById(R.id.adjustValueText);
-        tabBrightness = findViewById(R.id.tabBrightness);
-        tabContrast = findViewById(R.id.tabContrast);
-        tabSaturation = findViewById(R.id.tabSaturation);
-        tabSharpness = findViewById(R.id.tabSharpness);
-        tabClarity = findViewById(R.id.tabClarity);
-        tabHsl = findViewById(R.id.tabHsl);
-        tabCurves = findViewById(R.id.tabCurves);
-        tabHighlights = findViewById(R.id.tabHighlights);
-        tabShadows = findViewById(R.id.tabShadows);
-        iconBrightness = findViewById(R.id.iconBrightness);
-        iconContrast = findViewById(R.id.iconContrast);
-        iconSaturation = findViewById(R.id.iconSaturation);
-        iconSharpness = findViewById(R.id.iconSharpness);
-        iconClarity = findViewById(R.id.iconClarity);
-        iconHsl = findViewById(R.id.iconHsl);
-        iconCurves = findViewById(R.id.iconCurves);
-        iconHighlights = findViewById(R.id.iconHighlights);
-        iconShadows = findViewById(R.id.iconShadows);
-        labelBrightness = findViewById(R.id.labelBrightness);
-        labelContrast = findViewById(R.id.labelContrast);
-        labelSaturation = findViewById(R.id.labelSaturation);
-        labelSharpness = findViewById(R.id.labelSharpness);
-        labelClarity = findViewById(R.id.labelClarity);
-        labelHsl = findViewById(R.id.labelHsl);
-        labelCurves = findViewById(R.id.labelCurves);
-        labelHighlights = findViewById(R.id.labelHighlights);
-        labelShadows = findViewById(R.id.labelShadows);
-        Button btnAdjustReset = findViewById(R.id.btnAdjustReset);
-        Button btnAdjustApply = findViewById(R.id.btnAdjustApply);
-
-        filterPanel = findViewById(R.id.filterPanel);
-        filterCategoryTabs = findViewById(R.id.filterCategoryTabs);
-        filterVariantsList = findViewById(R.id.filterVariantsList);
-        filterIntensityValueText = findViewById(R.id.filterIntensityValueText);
-        filterIntensitySeek = findViewById(R.id.filterIntensitySeek);
-        Button btnFilterReset = findViewById(R.id.btnFilterReset);
-        Button btnFilterApply = findViewById(R.id.btnFilterApply);
-
         // Managers
-        brushManager = new BrushManager(this, photoEditor);
-        textManager = new TextManager(this, photoEditor);
-        stickerManager = new StickerManager(this, photoEditor);
+        brushManager = new BrushManager(this, binding, photoEditor);
+        textManager = new TextManager(this, binding, photoEditor);
+        stickerManager = new StickerManager(this, binding, photoEditor);
 
-        setupAdjustControls(btnAdjust, btnAdjustReset, btnAdjustApply);
-        setupFilterControls(btnFilterReset, btnFilterApply);
+        setupAdjustControls();
+        setupFilterControls();
 
         // AI Assistant
         setupAiAssistant();
 
-        btnCrop.setOnClickListener(v -> {
-            // Lưu trạng thái hiện tại (bao gồm filter, adjust, sticker, text...) vào file tạm để Crop
+        binding.btnCrop.setOnClickListener(v -> {
             File tempFile = new File(getCacheDir(), "crop_source_" + System.currentTimeMillis() + ".jpg");
 
             SaveSettings saveSettings = new SaveSettings.Builder()
@@ -858,36 +624,34 @@ public class EditorActivity extends AppCompatActivity {
             });
         });
         
-        btnFlip.setOnClickListener(v -> flipImage());
+        binding.btnFlip.setOnClickListener(v -> flipImage());
 
-        // Tác vụ Undo
-        btnUndo.setOnClickListener(v -> {
+        binding.btnUndo.setOnClickListener(v -> {
             if (!undoBitmapStack.isEmpty()) {
-                Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+                Bitmap current = ((BitmapDrawable) binding.photoEditorView.getSource().getDrawable()).getBitmap();
                 if (current != null) {
-                    redoBitmapStack.push(copyBitmap(current));
+                    redoBitmapStack.push(ImageProcessor.copyBitmap(current));
                 }
-                photoEditorView.getSource().setImageBitmap(undoBitmapStack.pop());
+                binding.photoEditorView.getSource().setImageBitmap(undoBitmapStack.pop());
 
             } else {
                 photoEditor.undo();
             }
         });
 
-        // Tác vụ Redo
-        btnRedo.setOnClickListener(v -> {
+        binding.btnRedo.setOnClickListener(v -> {
             if (!redoBitmapStack.isEmpty()) {
-                Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
-                if (current != null) undoBitmapStack.push(copyBitmap(current));
-                photoEditorView.getSource().setImageBitmap(redoBitmapStack.pop());
+                Bitmap current = ((BitmapDrawable) binding.photoEditorView.getSource().getDrawable()).getBitmap();
+                if (current != null) undoBitmapStack.push(ImageProcessor.copyBitmap(current));
+                binding.photoEditorView.getSource().setImageBitmap(redoBitmapStack.pop());
             } else {
                 photoEditor.redo();
             }
         });
 
-        btnFilter.setOnClickListener(v -> openFilterPanel());
+        binding.btnFilter.setOnClickListener(v -> openFilterPanel());
         
-        btnBrush.setOnClickListener(v -> {
+        binding.btnBrush.setOnClickListener(v -> {
             if (brushManager.isPanelVisible()) {
                 brushManager.closeBrushPanel();
             } else {
@@ -896,18 +660,17 @@ public class EditorActivity extends AppCompatActivity {
             }
         });
 
-        btnAddText.setOnClickListener(v -> {
+        binding.btnAddText.setOnClickListener(v -> {
             hideAllPanels();
             if (textManager != null) {
                 textManager.addDefaultText();
             }
         });
 
-        LinearLayout btnAiRmBg = findViewById(R.id.btnAiRmBg);
         backgroundRemoverAi = new BackgroundRemoverAi();
-        btnAiRmBg.setOnClickListener(v -> performAiBackgroundRemoval());
+        binding.btnAiRmBg.setOnClickListener(v -> performAiBackgroundRemoval());
 
-        btnSticker.setOnClickListener(v -> {
+        binding.btnSticker.setOnClickListener(v -> {
             if (stickerManager.isPanelVisible()) {
                 stickerManager.closeStickerPanel();
             } else {
@@ -916,55 +679,52 @@ public class EditorActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btnSave).setOnClickListener(v -> saveProcessedImage());
+        binding.btnSave.setOnClickListener(v -> saveProcessedImage());
     }
 
     private void flipImage() {
-        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) return;
+        if (!(binding.photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) return;
         saveBitmapState();
-        Bitmap src = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        Bitmap src = ((BitmapDrawable) binding.photoEditorView.getSource().getDrawable()).getBitmap();
         Matrix matrix = new Matrix();
         matrix.postScale(-1, 1, src.getWidth() / 2f, src.getHeight() / 2f);
         Bitmap flipped = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
         photoEditor.clearAllViews();
-        photoEditorView.getSource().setImageBitmap(flipped);
+        binding.photoEditorView.getSource().setImageBitmap(flipped);
     }
 
     private void hideAllPanels() {
-        if (adjustPanel != null && adjustPanel.getVisibility() == View.VISIBLE) closeAdjustPanel(false);
-        if (filterPanel != null && filterPanel.getVisibility() == View.VISIBLE) closeFilterPanel(false);
-        if (chatPanel != null) chatPanel.setVisibility(View.GONE);
+        if (binding.adjustPanel.getVisibility() == View.VISIBLE) closeAdjustPanel(false);
+        if (binding.filterPanel.getVisibility() == View.VISIBLE) closeFilterPanel(false);
+        if (binding.chatPanel.getVisibility() == View.VISIBLE) binding.chatPanel.setVisibility(View.GONE);
         if (brushManager != null && brushManager.isPanelVisible()) brushManager.closeBrushPanel();
         if (textManager != null && textManager.isPanelVisible()) textManager.hideStylingPanel();
         if (stickerManager != null && stickerManager.isPanelVisible()) stickerManager.closeStickerPanel();
     }
 
     private void performAiBackgroundRemoval() {
-        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
+        if (!(binding.photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
             Toast.makeText(this, "Không có ảnh để xử lý", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Bitmap currentBitmap = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        Bitmap currentBitmap = ((BitmapDrawable) binding.photoEditorView.getSource().getDrawable()).getBitmap();
         if (currentBitmap == null) return;
 
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Đang xóa nền AI...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        Dialog loadingDialog = showLoadingDialog("Đang xóa nền AI...");
 
         backgroundRemoverAi.process(currentBitmap, new AiProcessor.AiCallback() {
             @Override
             public void onSuccess(Bitmap result) {
-                progressDialog.dismiss();
+                loadingDialog.dismiss();
                 saveBitmapState();
-                photoEditorView.getSource().setImageBitmap(result);
+                binding.photoEditorView.getSource().setImageBitmap(result);
                 Toast.makeText(EditorActivity.this, "Đã xóa nền!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onError(Throwable e) {
-                progressDialog.dismiss();
+                loadingDialog.dismiss();
                 Toast.makeText(EditorActivity.this, "Lỗi AI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "AI Error: ", e);
             }
@@ -1063,17 +823,11 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void setupAiAssistant() {
-        chatPanel = findViewById(R.id.chatPanel);
-        rvChatHistory = findViewById(R.id.rvChatHistory);
-        etChatInput = findViewById(R.id.etChatInput);
-        btnSendChat = findViewById(R.id.btnSendChat);
-        pbAiThinking = findViewById(R.id.pbAiThinking);
-
         geminiApiClient = new GeminiApiClient(com.example.app_xhinh_anh.BuildConfig.GEMINI_API_KEY);
         
         chatAdapter = new ChatAdapter();
-        rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
-        rvChatHistory.setAdapter(chatAdapter);
+        binding.rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
+        binding.rvChatHistory.setAdapter(chatAdapter);
 
         // Tin nhắn hướng dẫn chi tiết ban đầu
         String guideMessage = "Chào bạn! Tôi là Trợ lý AI. Tôi có thể giúp bạn:\n\n" +
@@ -1083,25 +837,25 @@ public class EditorActivity extends AppCompatActivity {
                 "Bạn muốn tôi giúp gì cho bức ảnh này?";
         chatAdapter.addMessage(new ChatMessage(guideMessage, false));
 
-        findViewById(R.id.btnAiAssistant).setOnClickListener(v -> {
-            if (chatPanel.getVisibility() == View.VISIBLE) {
-                chatPanel.setVisibility(View.GONE);
+        binding.btnAiAssistant.setOnClickListener(v -> {
+            if (binding.chatPanel.getVisibility() == View.VISIBLE) {
+                binding.chatPanel.setVisibility(View.GONE);
             } else {
                 hideAllPanels();
-                chatPanel.setVisibility(View.VISIBLE);
+                binding.chatPanel.setVisibility(View.VISIBLE);
                 if (chatAdapter.getItemCount() <= 1) {
-                    rvChatHistory.smoothScrollToPosition(0);
+                    binding.rvChatHistory.smoothScrollToPosition(0);
                 }
             }
         });
 
-        btnSendChat.setOnClickListener(v -> {
-            String msg = etChatInput.getText().toString().trim();
+        binding.btnSendChat.setOnClickListener(v -> {
+            String msg = binding.etChatInput.getText().toString().trim();
             if (!msg.isEmpty()) {
                 sendChatMessage(msg);
                 // Hide keyboard
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(etChatInput.getWindowToken(), 0);
+                imm.hideSoftInputFromWindow(binding.etChatInput.getWindowToken(), 0);
             }
         });
     }
@@ -1126,100 +880,58 @@ public class EditorActivity extends AppCompatActivity {
                     saveBitmapState();
                     currentImageUri = resultUri;
                     photoEditor.clearAllViews();
-                    photoEditorView.getSource().setImageURI(currentImageUri);
+                    binding.photoEditorView.getSource().setImageURI(currentImageUri);
                 }
             }
         }
     }
 
-    private void processAiAction(String aiResponse) {
-        ActionMapper.map(aiResponse, new ActionMapper.ActionListener() {
-            @Override
-            public void onApplyFilter(String filterName) {
-                applyAiFilter(filterName);
-            }
-
-            @Override
-            public void onAdjustProperty(String property, int value) {
-                applyAiAdjustment(property, value);
-            }
-
-            @Override
-            public void onOpenTool(String toolName) {
-                openAiTool(toolName);
-            }
-
-            @Override
-            public void onRemoveBackground() {
-                runOnUiThread(() -> {
-                    Toast.makeText(EditorActivity.this, "AI đang thực hiện xóa nền...", Toast.LENGTH_SHORT).show();
-                    // Giả lập click vào nút xóa nền để chạy logic có sẵn
-                    findViewById(R.id.btnAiRmBg).performClick();
-                    
-                    // Tự động đóng chat sau khi thực hiện
-                    new android.os.Handler().postDelayed(() -> {
-                        if (chatPanel.getVisibility() == View.VISIBLE) {
-                            chatPanel.setVisibility(View.GONE);
-                        }
-                    }, 2000);
-                });
-            }
-
-            @Override
-            public void onMessage(String message) {
-                // Hiển thị tin nhắn tư vấn từ AI vào giao diện chat
-                chatAdapter.addMessage(new com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage(message, false));
-                rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-            }
-        });
-    }
-
     private void sendChatMessage(String message) {
         chatAdapter.addMessage(new ChatMessage(message, true));
-        etChatInput.setText("");
-        rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+        binding.etChatInput.setText("");
+        binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
 
-        pbAiThinking.setVisibility(View.VISIBLE);
+        binding.pbAiThinking.setVisibility(View.VISIBLE);
         geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
             @Override
             public void onSuccess(String response) {
                 runOnUiThread(() -> {
-                    pbAiThinking.setVisibility(View.GONE);
+                    binding.pbAiThinking.setVisibility(View.GONE);
                     ActionMapper.map(response, new ActionMapper.ActionListener() {
                         @Override
                         public void onApplyFilter(String filterName) {
                             chatAdapter.addMessage(new ChatMessage("Đang áp dụng bộ lọc: " + filterName, false));
                             applyAiFilter(filterName);
-                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onAdjustProperty(String property, int value) {
                             chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
                             applyAiAdjustment(property, value);
-                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onOpenTool(String toolName) {
                             chatAdapter.addMessage(new ChatMessage("Đang mở công cụ: " + toolName, false));
                             openAiTool(toolName);
-                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onRemoveBackground() {
                             chatAdapter.addMessage(new ChatMessage("Đang thực hiện xóa nền...", false));
                             runOnUiThread(() -> {
-                                findViewById(R.id.btnAiRmBg).performClick();
+                                binding.btnAiRmBg.performClick();
                             });
-                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
 
                         @Override
                         public void onMessage(String msg) {
                             chatAdapter.addMessage(new ChatMessage(msg, false));
-                            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                         }
                     });
                 });
@@ -1228,9 +940,9 @@ public class EditorActivity extends AppCompatActivity {
             @Override
             public void onError(Throwable t) {
                 runOnUiThread(() -> {
-                    pbAiThinking.setVisibility(View.GONE);
+                    binding.pbAiThinking.setVisibility(View.GONE);
                     chatAdapter.addMessage(new ChatMessage("Lỗi: " + t.getMessage(), false));
-                    rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+                    binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
                 });
             }
         });
@@ -1242,8 +954,8 @@ public class EditorActivity extends AppCompatActivity {
             for (FilterPreset variant : category.variants) {
                 if (variant.displayName.equalsIgnoreCase(filterName)) {
                     runOnUiThread(() -> {
-                        if (filterPanel.getVisibility() != View.VISIBLE) {
-                            findViewById(R.id.btnFilter).performClick();
+                        if (binding.filterPanel.getVisibility() != View.VISIBLE) {
+                            binding.btnFilter.performClick();
                         }
 
                         // Cập nhật UI category nếu cần
@@ -1254,14 +966,14 @@ public class EditorActivity extends AppCompatActivity {
                                 break;
                             }
                         }
-                        if (catIndex != -1 && filterCategoryTabs.getChildCount() > catIndex) {
-                            selectCategory(category, (TextView) filterCategoryTabs.getChildAt(catIndex));
+                        if (catIndex != -1 && binding.filterCategoryTabs.getChildCount() > catIndex) {
+                            selectCategory(category, (TextView) binding.filterCategoryTabs.getChildAt(catIndex));
                         }
 
                         // Tìm và chọn variant trong list để có highlight UI
                         View targetItem = null;
-                        for (int i = 0; i < filterVariantsList.getChildCount(); i++) {
-                            View item = filterVariantsList.getChildAt(i);
+                        for (int i = 0; i < binding.filterVariantsList.getChildCount(); i++) {
+                            View item = binding.filterVariantsList.getChildAt(i);
                             TextView nameTv = item.findViewById(R.id.filterName);
                             if (nameTv != null && nameTv.getText().toString().equalsIgnoreCase(filterName)) {
                                 targetItem = item;
@@ -1274,7 +986,7 @@ public class EditorActivity extends AppCompatActivity {
 
                         // Tự động lưu (Bake) và đóng Filter Panel sau khi AI làm xong
                         new android.os.Handler().postDelayed(() -> {
-                            if (filterPanel.getVisibility() == View.VISIBLE) {
+                            if (binding.filterPanel.getVisibility() == View.VISIBLE) {
                                 bakeFilter(); // Lưu hiệu ứng vào ảnh gốc
                                 closeFilterPanel(true);
                             }
@@ -1304,8 +1016,8 @@ public class EditorActivity extends AppCompatActivity {
         if (mode != -1) {
             final int targetMode = mode;
             runOnUiThread(() -> {
-                if (adjustPanel.getVisibility() != View.VISIBLE) {
-                    findViewById(R.id.btnAdjust).performClick();
+                if (binding.adjustPanel.getVisibility() != View.VISIBLE) {
+                    binding.btnAdjust.performClick();
                 }
                 
                 // Chọn mode trước
@@ -1317,7 +1029,7 @@ public class EditorActivity extends AppCompatActivity {
                 if (progress < 0) progress = 0;
                 if (progress > 100) progress = 100;
                 
-                seekAdjust.setProgress(progress);
+                binding.seekAdjust.setProgress(progress);
                 
                 // Cập nhật giá trị biến tương ứng trực tiếp để chắc chắn
                 int val = progress - 50;
@@ -1340,7 +1052,7 @@ public class EditorActivity extends AppCompatActivity {
                 Toast.makeText(this, "AI: Đã chỉnh " + property + " " + value + "%", Toast.LENGTH_SHORT).show();
 
                 new android.os.Handler().postDelayed(() -> {
-                    if (adjustPanel.getVisibility() == View.VISIBLE) {
+                    if (binding.adjustPanel.getVisibility() == View.VISIBLE) {
                         bakeAdjustments();
                         closeAdjustPanel(true);
                     }
@@ -1351,8 +1063,8 @@ public class EditorActivity extends AppCompatActivity {
 
     private void openAiTool(String toolName) {
         runOnUiThread(() -> {
-            if (adjustPanel.getVisibility() != View.VISIBLE) {
-                findViewById(R.id.btnAdjust).performClick();
+            if (binding.adjustPanel.getVisibility() != View.VISIBLE) {
+                binding.btnAdjust.performClick();
             }
             
             if (toolName.equalsIgnoreCase("curves")) {
@@ -1363,4 +1075,22 @@ public class EditorActivity extends AppCompatActivity {
         });
     }
 
+    private Dialog showLoadingDialog(String message) {
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_loading_dialog, null);
+        TextView tvMessage = view.findViewById(R.id.tvLoadingMessage);
+        tvMessage.setText(message);
+        
+        Dialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(view)
+                .setCancelable(false)
+                .create();
+        dialog.show();
+        return dialog;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        processingExecutor.shutdown();
+    }
 }

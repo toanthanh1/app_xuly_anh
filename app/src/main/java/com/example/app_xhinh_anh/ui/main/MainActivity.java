@@ -16,32 +16,34 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
+    private ActivityMainBinding binding;
     private ImageActionManager imageActionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
         imageActionManager = new ImageActionManager(this);
-        imageActionManager.setUpButtons(findViewById(R.id.main));
+        imageActionManager.setUpButtons(binding.getRoot());
 
         setupTitleAnimation();
     }
 
     private void setupTitleAnimation() {
-        TextView tvTitle = findViewById(R.id.tvTitle);
+        TextView tvTitle = binding.tvTitle;
         if (tvTitle == null) return;
 
         tvTitle.post(() -> {

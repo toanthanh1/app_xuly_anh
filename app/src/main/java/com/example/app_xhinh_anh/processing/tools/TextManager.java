@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.databinding.ActivityEditorBinding;
 import com.example.app_xhinh_anh.ui.editor.ColorPickerAdapter;
 
 import ja.burhanrashid52.photoeditor.PhotoEditor;
@@ -32,9 +33,9 @@ import ja.burhanrashid52.photoeditor.TextStyleBuilder;
 public class TextManager {
 
     private final AppCompatActivity activity;
+    private final ActivityEditorBinding binding;
     private final PhotoEditor photoEditor;
 
-    private LinearLayout textStylingPanel;
     private View currentSelectedTextViewRoot;
     private int currentTextColor = Color.WHITE;
     private int currentTextBgColor = Color.TRANSPARENT;
@@ -43,54 +44,37 @@ public class TextManager {
     private boolean isTextUnderline = false;
     private Typeface currentBaseTypeface = Typeface.DEFAULT;
 
-    public TextManager(AppCompatActivity activity, PhotoEditor photoEditor) {
+    public TextManager(AppCompatActivity activity, ActivityEditorBinding binding, PhotoEditor photoEditor) {
         this.activity = activity;
+        this.binding = binding;
         this.photoEditor = photoEditor;
         initViews();
     }
 
     private void initViews() {
-        textStylingPanel = activity.findViewById(R.id.textStylingPanel);
         setupTextStylingPanel();
     }
 
     private void setupTextStylingPanel() {
-        RecyclerView rvTextColors = activity.findViewById(R.id.rvTextColors);
-        RecyclerView rvTextBgColors = activity.findViewById(R.id.rvTextBgColors);
-        LinearLayout textPanelColor = activity.findViewById(R.id.textPanelColor);
-        LinearLayout textPanelBackground = activity.findViewById(R.id.textPanelBackground);
-        LinearLayout textPanelFont = activity.findViewById(R.id.textPanelFont);
-        ImageButton tabTextBtnColor = activity.findViewById(R.id.tabTextBtnColor);
-        ImageButton tabTextBtnBackground = activity.findViewById(R.id.tabTextBtnBackground);
-        ImageButton tabTextBtnFont = activity.findViewById(R.id.tabTextBtnFont);
-        ImageButton btnTextEditContent = activity.findViewById(R.id.btnTextEditContent);
-        ImageButton btnTextStylingClose = activity.findViewById(R.id.btnTextStylingClose);
-        ImageButton btnTextStylingDone = activity.findViewById(R.id.btnTextStylingDone);
-        
-        TextView btnStyleBold = activity.findViewById(R.id.btnStyleBold);
-        TextView btnStyleItalic = activity.findViewById(R.id.btnStyleItalic);
-        TextView btnStyleUnderline = activity.findViewById(R.id.btnStyleUnderline);
-        LinearLayout textFontList = activity.findViewById(R.id.textFontList);
-
         final int activeColor = ContextCompat.getColor(activity, R.color.brand_green);
         final int inactiveColor = Color.parseColor("#888888");
 
         // Color Adapters
-        rvTextColors.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+        binding.rvTextColors.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
         ColorPickerAdapter textCP = new ColorPickerAdapter(activity);
         textCP.setOnColorPickerClickListener(color -> {
             currentTextColor = color;
             applyStylesToCurrentText();
         });
-        rvTextColors.setAdapter(textCP);
+        binding.rvTextColors.setAdapter(textCP);
 
-        rvTextBgColors.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+        binding.rvTextBgColors.setLayoutManager(new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
         ColorPickerAdapter bgCP = new ColorPickerAdapter(activity);
         bgCP.setOnColorPickerClickListener(color -> {
             currentTextBgColor = color;
             applyStylesToCurrentText();
         });
-        rvTextBgColors.setAdapter(bgCP);
+        binding.rvTextBgColors.setAdapter(bgCP);
 
         // Fonts
         String[] fontNames = {"Mặc định", "Serif", "Monospace", "Siêu đậm", "Vừa", "Mỏng", "Hẹp", "Be Vietnam", "Patrick Hand"};
@@ -115,77 +99,77 @@ public class TextManager {
         LayoutInflater inflater = LayoutInflater.from(activity);
         for (int i = 0; i < fontNames.length; i++) {
             final Typeface tf = baseTypefaces[i];
-            TextView fontView = (TextView) inflater.inflate(R.layout.item_filter_category_tab, textFontList, false);
+            TextView fontView = (TextView) inflater.inflate(R.layout.item_filter_category_tab, binding.textFontList, false);
             fontView.setText(fontNames[i]);
             fontView.setOnClickListener(v -> {
                 currentBaseTypeface = tf != null ? tf : Typeface.DEFAULT;
                 applyStylesToCurrentText();
             });
-            textFontList.addView(fontView);
+            binding.textFontList.addView(fontView);
         }
 
-        btnStyleBold.setOnClickListener(v -> {
+        binding.btnStyleBold.setOnClickListener(v -> {
             isTextBold = !isTextBold;
-            btnStyleBold.setTextColor(isTextBold ? activeColor : Color.WHITE);
+            binding.btnStyleBold.setTextColor(isTextBold ? activeColor : Color.WHITE);
             applyStylesToCurrentText();
         });
-        btnStyleItalic.setOnClickListener(v -> {
+        binding.btnStyleItalic.setOnClickListener(v -> {
             isTextItalic = !isTextItalic;
-            btnStyleItalic.setTextColor(isTextItalic ? activeColor : Color.WHITE);
+            binding.btnStyleItalic.setTextColor(isTextItalic ? activeColor : Color.WHITE);
             applyStylesToCurrentText();
         });
-        btnStyleUnderline.setOnClickListener(v -> {
+        binding.btnStyleUnderline.setOnClickListener(v -> {
             isTextUnderline = !isTextUnderline;
-            btnStyleUnderline.setTextColor(isTextUnderline ? activeColor : Color.WHITE);
+            binding.btnStyleUnderline.setTextColor(isTextUnderline ? activeColor : Color.WHITE);
             applyStylesToCurrentText();
         });
 
         // Tabs
-        tabTextBtnColor.setOnClickListener(v -> {
-            textPanelColor.setVisibility(View.VISIBLE);
-            textPanelBackground.setVisibility(View.GONE);
-            textPanelFont.setVisibility(View.GONE);
-            tabTextBtnColor.setColorFilter(activeColor);
-            tabTextBtnBackground.setColorFilter(inactiveColor);
-            tabTextBtnFont.setColorFilter(inactiveColor);
-            btnTextEditContent.setColorFilter(inactiveColor);
+        binding.tabTextBtnColor.setOnClickListener(v -> {
+            binding.textPanelColor.setVisibility(View.VISIBLE);
+            binding.textPanelBackground.setVisibility(View.GONE);
+            binding.textPanelFont.setVisibility(View.GONE);
+            binding.tabTextBtnColor.setColorFilter(activeColor);
+            binding.tabTextBtnBackground.setColorFilter(inactiveColor);
+            binding.tabTextBtnFont.setColorFilter(inactiveColor);
+            binding.btnTextEditContent.setColorFilter(inactiveColor);
         });
 
-        tabTextBtnBackground.setOnClickListener(v -> {
-            textPanelColor.setVisibility(View.GONE);
-            textPanelBackground.setVisibility(View.VISIBLE);
-            textPanelFont.setVisibility(View.GONE);
-            tabTextBtnColor.setColorFilter(inactiveColor);
-            tabTextBtnBackground.setColorFilter(activeColor);
-            tabTextBtnFont.setColorFilter(inactiveColor);
-            btnTextEditContent.setColorFilter(inactiveColor);
+        binding.tabTextBtnBackground.setOnClickListener(v -> {
+            binding.textPanelColor.setVisibility(View.GONE);
+            binding.textPanelBackground.setVisibility(View.VISIBLE);
+            binding.textPanelFont.setVisibility(View.GONE);
+            binding.tabTextBtnColor.setColorFilter(inactiveColor);
+            binding.tabTextBtnBackground.setColorFilter(activeColor);
+            binding.tabTextBtnFont.setColorFilter(inactiveColor);
+            binding.btnTextEditContent.setColorFilter(inactiveColor);
         });
 
-        tabTextBtnFont.setOnClickListener(v -> {
-            textPanelColor.setVisibility(View.GONE);
-            textPanelBackground.setVisibility(View.GONE);
-            textPanelFont.setVisibility(View.VISIBLE);
-            tabTextBtnColor.setColorFilter(inactiveColor);
-            tabTextBtnBackground.setColorFilter(inactiveColor);
-            tabTextBtnFont.setColorFilter(activeColor);
-            btnTextEditContent.setColorFilter(inactiveColor);
+        binding.tabTextBtnFont.setOnClickListener(v -> {
+            binding.textPanelColor.setVisibility(View.GONE);
+            binding.textPanelBackground.setVisibility(View.GONE);
+            binding.textPanelFont.setVisibility(View.VISIBLE);
+            binding.tabTextBtnColor.setColorFilter(inactiveColor);
+            binding.tabTextBtnBackground.setColorFilter(inactiveColor);
+            binding.tabTextBtnFont.setColorFilter(activeColor);
+            binding.btnTextEditContent.setColorFilter(inactiveColor);
         });
 
-        btnTextEditContent.setOnClickListener(v -> {
+        binding.btnTextEditContent.setOnClickListener(v -> {
             if (currentSelectedTextViewRoot != null) {
                 TextView tv = findTextView(currentSelectedTextViewRoot);
                 if (tv != null) {
                     showContentEditDialog(currentSelectedTextViewRoot, tv.getText().toString());
                 }
             }
-            tabTextBtnColor.setColorFilter(inactiveColor);
-            tabTextBtnBackground.setColorFilter(inactiveColor);
-            tabTextBtnFont.setColorFilter(inactiveColor);
-            btnTextEditContent.setColorFilter(activeColor);
+            binding.tabTextBtnColor.setColorFilter(inactiveColor);
+            binding.tabTextBtnBackground.setColorFilter(inactiveColor);
+            binding.tabTextBtnFont.setColorFilter(inactiveColor);
+            binding.btnTextEditContent.setColorFilter(activeColor);
         });
 
-        btnTextStylingClose.setOnClickListener(v -> hideStylingPanel());
-        btnTextStylingDone.setOnClickListener(v -> hideStylingPanel());
+        binding.btnTextStylingClose.setOnClickListener(v -> hideStylingPanel());
+        binding.btnTextStylingDone.setOnClickListener(v -> hideStylingPanel());
     }
 
     public void addDefaultText() {
@@ -193,12 +177,12 @@ public class TextManager {
         styleBuilder.withTextColor(Color.WHITE);
         styleBuilder.withTextFont(Typeface.DEFAULT);
         photoEditor.addText("Text", styleBuilder);
-        textStylingPanel.setVisibility(View.VISIBLE);
+        binding.textStylingPanel.setVisibility(View.VISIBLE);
     }
 
     public void openTextStylingPanel(View view) {
         currentSelectedTextViewRoot = view;
-        textStylingPanel.setVisibility(View.VISIBLE);
+        binding.textStylingPanel.setVisibility(View.VISIBLE);
         
         TextView tv = findTextView(view);
         if (tv != null) {
@@ -218,9 +202,9 @@ public class TextManager {
 
             // Update UI
             int activeColor = ContextCompat.getColor(activity, R.color.brand_green);
-            ((TextView)activity.findViewById(R.id.btnStyleBold)).setTextColor(isTextBold ? activeColor : Color.WHITE);
-            ((TextView)activity.findViewById(R.id.btnStyleItalic)).setTextColor(isTextItalic ? activeColor : Color.WHITE);
-            ((TextView)activity.findViewById(R.id.btnStyleUnderline)).setTextColor(isTextUnderline ? activeColor : Color.WHITE);
+            binding.btnStyleBold.setTextColor(isTextBold ? activeColor : Color.WHITE);
+            binding.btnStyleItalic.setTextColor(isTextItalic ? activeColor : Color.WHITE);
+            binding.btnStyleUnderline.setTextColor(isTextUnderline ? activeColor : Color.WHITE);
         }
     }
 
@@ -301,10 +285,10 @@ public class TextManager {
     }
 
     public void hideStylingPanel() {
-        textStylingPanel.setVisibility(View.GONE);
+        binding.textStylingPanel.setVisibility(View.GONE);
     }
     
     public boolean isPanelVisible() {
-        return textStylingPanel.getVisibility() == View.VISIBLE;
+        return binding.textStylingPanel.getVisibility() == View.VISIBLE;
     }
 }
