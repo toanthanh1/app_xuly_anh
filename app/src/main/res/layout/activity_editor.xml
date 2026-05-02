@@ -791,14 +791,14 @@
                     android:layout_height="26dp"
                     android:contentDescription="@string/ai_rm_bg"
                     android:src="@drawable/ic_auto_fix"
-                    app:tint="@color/brand_green" />
+                    app:tint="@color/white" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/ai_rm_bg"
-                    android:textColor="@color/brand_green"
+                    android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
 
