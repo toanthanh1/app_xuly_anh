@@ -120,6 +120,7 @@ public class EditorActivity extends AppCompatActivity {
     // AI Assistant
     private ChatAdapter chatAdapter;
     private GeminiApiClient geminiApiClient;
+    private com.example.app_xhinh_anh.features.ai_assistant.domain.AiActionExecutor aiActionExecutor;
 
     // Managers
     private BrushManager brushManager;
@@ -852,6 +853,40 @@ public class EditorActivity extends AppCompatActivity {
     private void setupAiAssistant() {
         geminiApiClient = new GeminiApiClient(com.example.app_xhinh_anh.BuildConfig.GEMINI_API_KEY);
         
+        // Khởi tạo AiActionExecutor
+        aiActionExecutor = new com.example.app_xhinh_anh.features.ai_assistant.domain.AiActionExecutor(new com.example.app_xhinh_anh.features.ai_assistant.domain.AiActionExecutor.EditorActions() {
+            @Override
+            public void applyFilter(String filterName) {
+                applyAiFilter(filterName);
+            }
+
+            @Override
+            public void adjustProperty(String property, int value) {
+                applyAiAdjustment(property, value);
+            }
+
+            @Override
+            public void openTool(String toolName) {
+                openAiTool(toolName);
+            }
+
+            @Override
+            public void removeBackground() {
+                runOnUiThread(() -> binding.btnAiRmBg.performClick());
+            }
+
+            @Override
+            public void addChatMessage(String message, boolean isUser) {
+                chatAdapter.addMessage(new ChatMessage(message, isUser));
+                binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+            }
+
+            @Override
+            public void showThinking(boolean show) {
+                binding.pbAiThinking.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
+
         chatAdapter = new ChatAdapter();
         binding.rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         binding.rvChatHistory.setAdapter(chatAdapter);
@@ -922,46 +957,7 @@ public class EditorActivity extends AppCompatActivity {
         geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
             @Override
             public void onSuccess(String response) {
-                runOnUiThread(() -> {
-                    binding.pbAiThinking.setVisibility(View.GONE);
-                    ActionMapper.map(response, new ActionMapper.ActionListener() {
-                        @Override
-                        public void onApplyFilter(String filterName) {
-                            chatAdapter.addMessage(new ChatMessage("Đang áp dụng bộ lọc: " + filterName, false));
-                            applyAiFilter(filterName);
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onAdjustProperty(String property, int value) {
-                            chatAdapter.addMessage(new ChatMessage("Đang chỉnh " + property + " thành " + value + "%", false));
-                            applyAiAdjustment(property, value);
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onOpenTool(String toolName) {
-                            chatAdapter.addMessage(new ChatMessage("Đang mở công cụ: " + toolName, false));
-                            openAiTool(toolName);
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onRemoveBackground() {
-                            chatAdapter.addMessage(new ChatMessage("Đang thực hiện xóa nền...", false));
-                            runOnUiThread(() -> {
-                                binding.btnAiRmBg.performClick();
-                            });
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-
-                        @Override
-                        public void onMessage(String msg) {
-                            chatAdapter.addMessage(new ChatMessage(msg, false));
-                            binding.rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
-                        }
-                    });
-                });
+                aiActionExecutor.executeResponse(response);
             }
 
             @Override

@@ -13,9 +13,21 @@ public class ActionMapper {
 
     public static void map(String aiResponse, ActionListener listener) {
         try {
-            // Remove markdown code blocks if present
-            String cleanedResponse = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
-            JSONObject json = new JSONObject(cleanedResponse);
+            String jsonStr = aiResponse;
+            
+            // Tìm vị trí của JSON trong chuỗi (giữa cặp ngoặc { })
+            int firstBrace = aiResponse.indexOf('{');
+            int lastBrace = aiResponse.lastIndexOf('}');
+            
+            if (firstBrace >= 0 && lastBrace > firstBrace) {
+                jsonStr = aiResponse.substring(firstBrace, lastBrace + 1);
+            } else {
+                // Nếu không thấy dấu ngoặc, có thể AI trả về text thuần
+                listener.onMessage(aiResponse);
+                return;
+            }
+
+            JSONObject json = new JSONObject(jsonStr);
             String action = json.optString("action", "");
 
             switch (action) {
