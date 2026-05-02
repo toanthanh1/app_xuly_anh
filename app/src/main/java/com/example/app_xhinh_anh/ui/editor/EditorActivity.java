@@ -238,6 +238,8 @@ public class EditorActivity extends AppCompatActivity {
         binding.tabCurves.setOnClickListener(v -> selectAdjustMode(MODE_CURVES));
         binding.tabHighlights.setOnClickListener(v -> selectAdjustMode(MODE_HIGHLIGHTS));
         binding.tabShadows.setOnClickListener(v -> selectAdjustMode(MODE_SHADOWS));
+        binding.tabExposure.setOnClickListener(v -> selectAdjustMode(MODE_EXPOSURE));
+        binding.tabTemperature.setOnClickListener(v -> selectAdjustMode(MODE_TEMPERATURE));
 
         binding.seekAdjust.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -254,6 +256,8 @@ public class EditorActivity extends AppCompatActivity {
                     case MODE_CURVES: curvesValue = value; break;
                     case MODE_HIGHLIGHTS: highlightsValue = value; break;
                     case MODE_SHADOWS: shadowsValue = value; break;
+                    case MODE_EXPOSURE: exposureValue = value; break;
+                    case MODE_TEMPERATURE: temperatureValue = value; break;
                     default: brightnessValue = value;
                 }
                 applyColorAdjustments();
