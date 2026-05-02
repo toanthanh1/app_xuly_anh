@@ -39,6 +39,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.app_xhinh_anh.R;
 import com.example.app_xhinh_anh.processing.tools.BrushManager;
+import com.example.app_xhinh_anh.processing.tools.StickerManager;
 import com.example.app_xhinh_anh.processing.tools.TextManager;
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
@@ -114,6 +115,7 @@ public class EditorActivity extends AppCompatActivity {
     // Managers
     private BrushManager brushManager;
     private TextManager textManager;
+    private StickerManager stickerManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,6 +152,9 @@ public class EditorActivity extends AppCompatActivity {
             currentImageUri = Uri.parse(imageUriString);
             photoEditorView.getSource().setImageURI(currentImageUri);
         }
+
+        btnUndo.setOnClickListener(v -> photoEditor.undo());
+        btnRedo.setOnClickListener(v -> photoEditor.redo());
     }
 
     private void setupAdjustControls(View btnAdjust, Button btnAdjustReset, Button btnAdjustApply) {
@@ -785,9 +790,14 @@ public class EditorActivity extends AppCompatActivity {
         // Managers
         brushManager = new BrushManager(this, photoEditor);
         textManager = new TextManager(this, photoEditor);
+        stickerManager = new StickerManager(this, photoEditor);
 
         setupAdjustControls(btnAdjust, btnAdjustReset, btnAdjustApply);
         setupFilterControls(btnFilterReset, btnFilterApply);
+
+        btnCrop.setOnClickListener(v -> startCrop(currentImageUri));
+        btnFlip.setOnClickListener(v -> flipImage());
+        btnFilter.setOnClickListener(v -> openFilterPanel());
         
         findViewById(R.id.btnBrush).setOnClickListener(v -> {
             if (brushManager.isPanelVisible()) {
@@ -805,7 +815,27 @@ public class EditorActivity extends AppCompatActivity {
             }
         });
 
+        btnSticker.setOnClickListener(v -> {
+            if (stickerManager.isPanelVisible()) {
+                stickerManager.closeStickerPanel();
+            } else {
+                hideAllPanels();
+                stickerManager.openStickerPanel();
+            }
+        });
+
         findViewById(R.id.btnSave).setOnClickListener(v -> saveProcessedImage());
+    }
+
+    private void flipImage() {
+        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) return;
+        saveBitmapState();
+        Bitmap src = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        Matrix matrix = new Matrix();
+        matrix.postScale(-1, 1, src.getWidth() / 2f, src.getHeight() / 2f);
+        Bitmap flipped = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
+        photoEditor.clearAllViews();
+        photoEditorView.getSource().setImageBitmap(flipped);
     }
 
     private void hideAllPanels() {
@@ -813,6 +843,7 @@ public class EditorActivity extends AppCompatActivity {
         if (filterPanel.getVisibility() == View.VISIBLE) closeFilterPanel(false);
         if (brushManager != null && brushManager.isPanelVisible()) brushManager.closeBrushPanel();
         if (textManager != null && textManager.isPanelVisible()) textManager.hideStylingPanel();
+        if (stickerManager != null && stickerManager.isPanelVisible()) stickerManager.closeStickerPanel();
     }
 
     private void saveProcessedImage() {
