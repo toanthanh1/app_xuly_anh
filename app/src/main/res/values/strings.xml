@@ -7,4 +7,26 @@
     <string name="processing">Đang xử lý...</string>
     <string name="ai_error">Lỗi xử lý AI</string>
     <string name="no_subject_found">Không tìm thấy chủ thể để tách nền</string>
+    <string name="exposure">Phơi sáng</string>
+    <string name="temperature">Nhiệt độ</string>
+    <string name="brightness">Độ sáng</string>
+    <string name="contrast">Tương phản</string>
+    <string name="saturation">Bão hòa</string>
+    <string name="sharpness">Sắc nét</string>
+    <string name="clarity">Rõ nét</string>
+    <string name="hsl">HSL</string>
+    <string name="curves">Đường cong</string>
+    <string name="highlights">Vùng sáng</string>
+    <string name="shadows">Vùng tối</string>
+    <string name="reset">Đặt lại</string>
+    <string name="done">Xong</string>
+    <string name="save">Lưu</string>
+    <string name="crop">Cắt</string>
+    <string name="flip_horizontal">Lật ngang</string>
+    <string name="flip_vertical">Lật dọc</string>
+    <string name="adjust">Chỉnh</string>
+    <string name="filter">Bộ lọc</string>
+    <string name="brush">Vẽ</string>
+    <string name="text">Văn bản</string>
+    <string name="sticker">Sticker</string>
 </resources>
