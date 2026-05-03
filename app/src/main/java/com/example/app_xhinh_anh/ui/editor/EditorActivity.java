@@ -75,7 +75,6 @@ public class EditorActivity extends AppCompatActivity {
     private PhotoEditor photoEditor;
     private StickerManager stickerManager;
     private Uri currentImageUri;
-    private boolean isBrushMode = false;
     private ImageButton btnUndo, btnRedo;
     private final Stack<Bitmap> undoBitmapStack = new Stack<>();
     private final Stack<Bitmap> redoBitmapStack = new Stack<>();
@@ -140,7 +139,6 @@ public class EditorActivity extends AppCompatActivity {
     private SeekBar filterIntensitySeek;
     private Bitmap filterBaseBitmap;
     private Bitmap filterThumbBitmap;
-    private FilterPreset.Category selectedCategory;
     private TextView selectedCategoryTabView;
     private FilterPreset selectedVariant;
     private View selectedVariantView;
@@ -227,6 +225,10 @@ public class EditorActivity extends AppCompatActivity {
     private View selectedTextFontView;
     private View selectedTextColorView;
     private List<FontDef> textFontList;
+    
+    // ==== Text editing state ====
+    private TextView editingTextView = null;  // Tracked text view being edited
+    private boolean isEditingExistingText = false;  // Flag to distinguish between new and editing mode
 
     // ==== Smart eraser panel ====
     private LinearLayout smartEraserPanel;
@@ -248,7 +250,7 @@ public class EditorActivity extends AppCompatActivity {
             loadingDialog.dismiss();
         }
         loadingDialog = new Dialog(this, R.style.TransparentDialog);
-        View view = LayoutInflater.from(this).inflate(R.layout.layout_loading_dialog, null);
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_loading_dialog, new android.widget.FrameLayout(this), false);
         TextView tvMessage = view.findViewById(R.id.tvLoadingMessage);
         if (tvMessage != null) tvMessage.setText(message);
         loadingDialog.setContentView(view);
@@ -770,7 +772,6 @@ public class EditorActivity extends AppCompatActivity {
         if (selectedVariantView != null) selectedVariantView.setBackground(null);
         selectedVariantView = null;
         selectedVariant = null;
-        selectedCategory = null;
         selectedCategoryTabView = null;
         filterBaseBitmap = null;
         filterThumbBitmap = null;
@@ -846,7 +847,6 @@ public class EditorActivity extends AppCompatActivity {
             populateBrushColors();
         }
 
-        isBrushMode = true;
         photoEditor.setBrushDrawingMode(true);
         photoEditor.setBrushSize(currentBrushSize);
         photoEditor.setBrushColor(currentBrushColor);
@@ -869,7 +869,6 @@ public class EditorActivity extends AppCompatActivity {
 
     private void closeBrushPanel() {
         brushPanel.setVisibility(View.GONE);
-        isBrushMode = false;
         photoEditor.setBrushDrawingMode(false);
         int inactive = ContextCompat.getColor(this, R.color.white);
         iconBrush.setColorFilter(inactive);
@@ -977,7 +976,6 @@ public class EditorActivity extends AppCompatActivity {
         }
         tabView.setTextColor(ContextCompat.getColor(this, R.color.brand_green));
         selectedCategoryTabView = tabView;
-        selectedCategory = category;
         // Khi đổi category → bỏ chọn variant cũ và clear preview
         clearVariantSelection();
         populateVariants(category);
@@ -1271,23 +1269,31 @@ public class EditorActivity extends AppCompatActivity {
         redoBitmapStack.clear();
         redoOpStack.clear();
     }
-    private void setupPhotoEditorListener() {
-        photoEditor.setOnPhotoEditorListener(new OnPhotoEditorListener() {
-            @Override
-            public void onEditTextChangeListener(@Nullable View view, @Nullable String s, int i) {}
-            @Override public void onAddViewListener(@Nullable ViewType viewType, int i) {
-                // Bỏ qua sự kiện do chính undo/redo của ta gây ra (photoEditor.redo() sẽ add lại view)
-                if (isPerformingUndoRedo) return;
-                undoOpStack.push(OpType.VIEW);
-                redoBitmapStack.clear();
-                redoOpStack.clear();
-            }
-            @Override public void onRemoveViewListener(@Nullable ViewType viewType, int i) {}
-            @Override public void onStartViewChangeListener(@Nullable ViewType viewType) {}
-            @Override public void onStopViewChangeListener(@Nullable ViewType viewType) {}
-            @Override public void onTouchSourceImage(@Nullable MotionEvent motionEvent) {}
-        });
-    }
+     private void setupPhotoEditorListener() {
+         photoEditor.setOnPhotoEditorListener(new OnPhotoEditorListener() {
+             @Override
+             public void onEditTextChangeListener(@Nullable View view, @Nullable String s, int i) {
+                 // Handle text editing - when user taps on existing text
+                 if (view instanceof TextView) {
+                     editingTextView = (TextView) view;
+                     isEditingExistingText = true;
+                     loadTextForEditing((TextView) view);
+                     openTextPanel();
+                 }
+             }
+             @Override public void onAddViewListener(@Nullable ViewType viewType, int i) {
+                 // Bỏ qua sự kiện do chính undo/redo của ta gây ra (photoEditor.redo() sẽ add lại view)
+                 if (isPerformingUndoRedo) return;
+                 undoOpStack.push(OpType.VIEW);
+                 redoBitmapStack.clear();
+                 redoOpStack.clear();
+             }
+             @Override public void onRemoveViewListener(@Nullable ViewType viewType, int i) {}
+             @Override public void onStartViewChangeListener(@Nullable ViewType viewType) {}
+             @Override public void onStopViewChangeListener(@Nullable ViewType viewType) {}
+             @Override public void onTouchSourceImage(@Nullable MotionEvent motionEvent) {}
+         });
+     }
     @SuppressWarnings("deprecation")
     private void initViews() {
         photoEditorView = findViewById(R.id.photoEditorView);
@@ -1538,87 +1544,100 @@ public class EditorActivity extends AppCompatActivity {
     // ============================================================
 
     private void setupTextControls(Button btnTextCancel, Button btnTextDone) {
-        tabTextFont.setOnClickListener(v -> selectTextTab(TEXT_TAB_FONT));
-        tabTextColor.setOnClickListener(v -> selectTextTab(TEXT_TAB_COLOR));
-        tabTextSize.setOnClickListener(v -> selectTextTab(TEXT_TAB_SIZE));
-        tabTextFormat.setOnClickListener(v -> selectTextTab(TEXT_TAB_FORMAT));
-        tabTextAlign.setOnClickListener(v -> selectTextTab(TEXT_TAB_ALIGN));
+         tabTextFont.setOnClickListener(v -> selectTextTab(TEXT_TAB_FONT));
+         tabTextColor.setOnClickListener(v -> selectTextTab(TEXT_TAB_COLOR));
+         tabTextSize.setOnClickListener(v -> selectTextTab(TEXT_TAB_SIZE));
+         tabTextFormat.setOnClickListener(v -> selectTextTab(TEXT_TAB_FORMAT));
+         tabTextAlign.setOnClickListener(v -> selectTextTab(TEXT_TAB_ALIGN));
 
-        btnTextBold.setOnClickListener(v -> {
-            isTextBold = !isTextBold;
-            btnTextBold.setColorFilter(isTextBold
-                    ? ContextCompat.getColor(this, R.color.brand_green)
-                    : ContextCompat.getColor(this, R.color.white));
-        });
-        btnTextItalic.setOnClickListener(v -> {
-            isTextItalic = !isTextItalic;
-            btnTextItalic.setColorFilter(isTextItalic
-                    ? ContextCompat.getColor(this, R.color.brand_green)
-                    : ContextCompat.getColor(this, R.color.white));
-        });
+         // Add text watcher for real-time preview
+         textInput.addTextChangedListener(new android.text.TextWatcher() {
+             @Override
+             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
-        btnTextUnderline.setOnClickListener(v -> {
-            isTextUnderline = !isTextUnderline;
-            btnTextUnderline.setColorFilter(isTextUnderline
-                    ? ContextCompat.getColor(this, R.color.brand_green)
-                    : ContextCompat.getColor(this, R.color.white));
-        });
+             @Override
+             public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
-        btnTextAlignLeft.setOnClickListener(v -> {
-            currentTextAlign = Gravity.START;
-            updateTextAlignTints();
-        });
-        btnTextAlignCenter.setOnClickListener(v -> {
-            currentTextAlign = Gravity.CENTER;
-            updateTextAlignTints();
-        });
-        btnTextAlignRight.setOnClickListener(v -> {
-            currentTextAlign = Gravity.END;
-            updateTextAlignTints();
-        });
+             @Override
+             public void afterTextChanged(android.text.Editable s) {
+                 // Real-time preview: update the editing text view if we're in edit mode
+                 if (isEditingExistingText && editingTextView != null) {
+                     editingTextView.setText(s.toString());
+                 }
+             }
+         });
 
-        textSizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
-                int s = Math.max(8, progress);
-                currentTextSize = s;
-                textSizeValueText.setText(String.valueOf(s));
-            }
-            @Override public void onStartTrackingTouch(SeekBar sb) {}
-            @Override public void onStopTrackingTouch(SeekBar sb) {}
-        });
+         btnTextBold.setOnClickListener(v -> {
+             isTextBold = !isTextBold;
+             btnTextBold.setColorFilter(isTextBold
+                     ? ContextCompat.getColor(this, R.color.brand_green)
+                     : ContextCompat.getColor(this, R.color.white));
+             updatePreviewTextStyle();
+         });
+         btnTextItalic.setOnClickListener(v -> {
+             isTextItalic = !isTextItalic;
+             btnTextItalic.setColorFilter(isTextItalic
+                     ? ContextCompat.getColor(this, R.color.brand_green)
+                     : ContextCompat.getColor(this, R.color.white));
+             updatePreviewTextStyle();
+         });
+
+         btnTextUnderline.setOnClickListener(v -> {
+             isTextUnderline = !isTextUnderline;
+             btnTextUnderline.setColorFilter(isTextUnderline
+                     ? ContextCompat.getColor(this, R.color.brand_green)
+                     : ContextCompat.getColor(this, R.color.white));
+             updatePreviewTextStyle();
+         });
+
+         btnTextAlignLeft.setOnClickListener(v -> {
+             currentTextAlign = Gravity.START;
+             updateTextAlignTints();
+             updatePreviewTextStyle();
+         });
+         btnTextAlignCenter.setOnClickListener(v -> {
+             currentTextAlign = Gravity.CENTER;
+             updateTextAlignTints();
+             updatePreviewTextStyle();
+         });
+         btnTextAlignRight.setOnClickListener(v -> {
+             currentTextAlign = Gravity.END;
+             updateTextAlignTints();
+             updatePreviewTextStyle();
+         });
+
+         textSizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+             @Override
+             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
+                 int s = Math.max(8, progress);
+                 currentTextSize = s;
+                 textSizeValueText.setText(String.valueOf(s));
+                 updatePreviewTextStyle();  // Update preview in real-time
+             }
+             @Override public void onStartTrackingTouch(SeekBar sb) {}
+             @Override public void onStopTrackingTouch(SeekBar sb) {}
+         });
 
         btnTextCancel.setOnClickListener(v -> closeTextPanel());
 
         btnTextDone.setOnClickListener(v -> {
-            String text = textInput.getText().toString().trim();
-            if (text.isEmpty()) {
-                Toast.makeText(this, "Vui lòng nhập văn bản", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            TextStyleBuilder builder = new TextStyleBuilder();
-            builder.withTextSize((float) currentTextSize);
-            builder.withTextColor(currentTextColor);
-            if (textFontList != null && currentTextFontIndex < textFontList.size()) {
-                builder.withTextFont(textFontList.get(currentTextFontIndex).typeface);
-            }
-            int style = Typeface.NORMAL;
-            if (isTextBold && isTextItalic) style = Typeface.BOLD_ITALIC;
-            else if (isTextBold) style = Typeface.BOLD;
-            else if (isTextItalic) style = Typeface.ITALIC;
-            if (style != Typeface.NORMAL) builder.withTextStyle(style);
-            builder.withGravity(currentTextAlign | Gravity.CENTER_VERTICAL);
-            
-            photoEditor.addText(text, builder);
-            
-            // Áp dụng underline sau khi addText nếu được chọn
-            if (isTextUnderline) {
-                applyUnderlineToLastTextView();
-            }
-            
-            textInput.setText("");
-            closeTextPanel();
-        });
+             String text = textInput.getText().toString().trim();
+             if (text.isEmpty()) {
+                 Toast.makeText(this, "Vui lòng nhập văn bản", Toast.LENGTH_SHORT).show();
+                 return;
+             }
+
+             if (isEditingExistingText && editingTextView != null) {
+                 // Update existing text
+                 updateExistingText();
+             } else {
+                 // Add new text
+                 addNewText(text);
+             }
+
+             textInput.setText("");
+             closeTextPanel();
+         });
     }
 
     private void openTextPanel() {
@@ -1671,13 +1690,188 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void closeTextPanel() {
-        textPanel.setVisibility(View.GONE);
-        android.view.inputmethod.InputMethodManager imm =
-                (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        if (imm != null && textInput != null) {
-            imm.hideSoftInputFromWindow(textInput.getWindowToken(), 0);
-        }
-    }
+         textPanel.setVisibility(View.GONE);
+         android.view.inputmethod.InputMethodManager imm =
+                 (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+         if (imm != null && textInput != null) {
+             imm.hideSoftInputFromWindow(textInput.getWindowToken(), 0);
+         }
+         // Reset editing state
+         editingTextView = null;
+         isEditingExistingText = false;
+     }
+
+     /**
+      * Load existing text into the editing panel when user taps on text
+      */
+     private void loadTextForEditing(TextView textView) {
+         if (textView == null) return;
+
+         // Load text content
+         String text = textView.getText().toString();
+         textInput.setText(text);
+         textInput.setSelection(text.length());  // Place cursor at end
+
+         // Extract text styling
+         extractTextStyling(textView);
+
+         // Show message that user is editing existing text
+         Toast.makeText(this, "Đang chỉnh sửa văn bản", Toast.LENGTH_SHORT).show();
+     }
+
+     /**
+      * Extract styling information from a TextView for editing
+      */
+     private void extractTextStyling(TextView textView) {
+         if (textView == null) return;
+
+         // Extract text color
+         currentTextColor = textView.getCurrentTextColor();
+
+         // Extract text size
+         currentTextSize = Math.round(textView.getTextSize());
+
+         // Extract typeface and style
+         Typeface typeface = textView.getTypeface();
+         if (typeface != null) {
+             int style = typeface.getStyle();
+             isTextBold = (style & Typeface.BOLD) != 0;
+             isTextItalic = (style & Typeface.ITALIC) != 0;
+
+             // Try to find matching font in textFontList
+             if (textFontList != null) {
+                 for (int i = 0; i < textFontList.size(); i++) {
+                     if (textFontList.get(i).typeface.equals(typeface)) {
+                         currentTextFontIndex = i;
+                         break;
+                     }
+                 }
+             }
+         }
+
+         // Extract underline
+         int flags = textView.getPaintFlags();
+         isTextUnderline = (flags & Paint.UNDERLINE_TEXT_FLAG) != 0;
+
+         // Extract text alignment/gravity
+         int gravity = textView.getGravity();
+         if ((gravity & Gravity.START) != 0 || (gravity & Gravity.LEFT) != 0) {
+             currentTextAlign = Gravity.START;
+         } else if ((gravity & Gravity.END) != 0 || (gravity & Gravity.RIGHT) != 0) {
+             currentTextAlign = Gravity.END;
+         } else {
+             currentTextAlign = Gravity.CENTER;
+         }
+     }
+
+     /**
+      * Add new text to the image
+      */
+     private void addNewText(String text) {
+         TextStyleBuilder builder = new TextStyleBuilder();
+         builder.withTextSize((float) currentTextSize);
+         builder.withTextColor(currentTextColor);
+         if (textFontList != null && currentTextFontIndex < textFontList.size()) {
+             builder.withTextFont(textFontList.get(currentTextFontIndex).typeface);
+         }
+         int style = Typeface.NORMAL;
+         if (isTextBold && isTextItalic) style = Typeface.BOLD_ITALIC;
+         else if (isTextBold) style = Typeface.BOLD;
+         else if (isTextItalic) style = Typeface.ITALIC;
+         if (style != Typeface.NORMAL) builder.withTextStyle(style);
+         builder.withGravity(currentTextAlign | Gravity.CENTER_VERTICAL);
+
+         photoEditor.addText(text, builder);
+
+         // Áp dụng underline sau khi addText nếu được chọn
+         if (isTextUnderline) {
+             applyUnderlineToLastTextView();
+         }
+
+         Toast.makeText(this, "Đã thêm văn bản", Toast.LENGTH_SHORT).show();
+     }
+
+     /**
+      * Update existing text that user is editing
+      */
+     private void updateExistingText() {
+         if (editingTextView == null) {
+             addNewText(textInput.getText().toString().trim());
+             return;
+         }
+         
+         String newText = textInput.getText().toString().trim();
+         
+         // Update text content
+         editingTextView.setText(newText);
+         
+         // Update text size
+         editingTextView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, currentTextSize);
+         
+         // Update text color
+         editingTextView.setTextColor(currentTextColor);
+         
+         // Update typeface
+         Typeface typeface = Typeface.DEFAULT;
+         if (textFontList != null && currentTextFontIndex < textFontList.size()) {
+             typeface = textFontList.get(currentTextFontIndex).typeface;
+         }
+         int style = Typeface.NORMAL;
+         if (isTextBold && isTextItalic) style = Typeface.BOLD_ITALIC;
+         else if (isTextBold) style = Typeface.BOLD;
+         else if (isTextItalic) style = Typeface.ITALIC;
+         editingTextView.setTypeface(typeface, style);
+         
+         // Update gravity
+         editingTextView.setGravity(currentTextAlign | Gravity.CENTER_VERTICAL);
+         
+         // Update underline
+         int flags = editingTextView.getPaintFlags();
+         if (isTextUnderline) {
+             editingTextView.setPaintFlags(flags | Paint.UNDERLINE_TEXT_FLAG);
+         } else {
+             editingTextView.setPaintFlags(flags & ~Paint.UNDERLINE_TEXT_FLAG);
+         }
+         
+         Toast.makeText(this, "Đã cập nhật văn bản", Toast.LENGTH_SHORT).show();
+     }
+     
+     /**
+      * Update preview of editing text in real-time as user changes styling
+      */
+     private void updatePreviewTextStyle() {
+         if (!isEditingExistingText || editingTextView == null) {
+             return;  // Only preview when in editing mode
+         }
+         
+         // Update text size
+         editingTextView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, currentTextSize);
+         
+         // Update text color
+         editingTextView.setTextColor(currentTextColor);
+         
+         // Update typeface
+         Typeface typeface = Typeface.DEFAULT;
+         if (textFontList != null && currentTextFontIndex < textFontList.size()) {
+             typeface = textFontList.get(currentTextFontIndex).typeface;
+         }
+         int style = Typeface.NORMAL;
+         if (isTextBold && isTextItalic) style = Typeface.BOLD_ITALIC;
+         else if (isTextBold) style = Typeface.BOLD;
+         else if (isTextItalic) style = Typeface.ITALIC;
+         editingTextView.setTypeface(typeface, style);
+         
+         // Update gravity
+         editingTextView.setGravity(currentTextAlign | Gravity.CENTER_VERTICAL);
+         
+         // Update underline
+         int flags = editingTextView.getPaintFlags();
+         if (isTextUnderline) {
+             editingTextView.setPaintFlags(flags | Paint.UNDERLINE_TEXT_FLAG);
+         } else {
+             editingTextView.setPaintFlags(flags & ~Paint.UNDERLINE_TEXT_FLAG);
+         }
+     }
 
     private void applyUnderlineToLastTextView() {
         // Lấy view cuối cùng được thêm vào photoEditorView
@@ -2009,14 +2203,15 @@ public class EditorActivity extends AppCompatActivity {
             item.setClickable(true);
             item.setFocusable(true);
             if (isSelected) selectedTextFontView = item;
-            item.setOnClickListener(v -> {
-                currentTextFontIndex = index;
-                if (selectedTextFontView != null) {
-                    ((TextView) selectedTextFontView).setTextColor(inactive);
-                }
-                item.setTextColor(active);
-                selectedTextFontView = item;
-            });
+             item.setOnClickListener(v -> {
+                 currentTextFontIndex = index;
+                 if (selectedTextFontView != null) {
+                     ((TextView) selectedTextFontView).setTextColor(inactive);
+                 }
+                 item.setTextColor(active);
+                 selectedTextFontView = item;
+                 updatePreviewTextStyle();  // Update preview when font changes
+             });
             textFontRow.addView(item);
         }
     }
@@ -2057,14 +2252,15 @@ public class EditorActivity extends AppCompatActivity {
                 selectedTextColorView = container;
                 currentTextColor = c;
             }
-            container.setOnClickListener(v -> {
-                if (selectedTextColorView != null) {
-                    selectedTextColorView.setBackground(null);
-                }
-                container.setBackgroundResource(R.drawable.bg_brush_color_selected);
-                selectedTextColorView = container;
-                currentTextColor = c;
-            });
+             container.setOnClickListener(v -> {
+                 if (selectedTextColorView != null) {
+                     selectedTextColorView.setBackground(null);
+                 }
+                 container.setBackgroundResource(R.drawable.bg_brush_color_selected);
+                 selectedTextColorView = container;
+                 currentTextColor = c;
+                 updatePreviewTextStyle();  // Update preview when color changes
+             });
             textColorRow.addView(container);
         }
     }
@@ -2193,9 +2389,7 @@ public class EditorActivity extends AppCompatActivity {
                 String[] props = data.getStringArrayExtra("adjust_props");
                 int[] values = data.getIntArrayExtra("adjust_values");
                 if (props != null && values != null && props.length == values.length && props.length > 0) {
-                    for (int i = 0; i < props.length; i++) {
-                        applyAiAdjustment(props[i], values[i]);
-                    }
+                    applyAiAdjustments(props, values);
                 } else {
                     // Fallback schema cũ (đơn thuộc tính) — giữ để tương thích.
                     applyAiAdjustment(data.getStringExtra("property"), data.getIntExtra("value", 0));
@@ -2260,10 +2454,15 @@ public class EditorActivity extends AppCompatActivity {
 
     private void applyAiFilter(String filterName) {
         if (filterName == null) return;
+        String name = filterName.trim();
+        if (name.isEmpty()) {
+            Toast.makeText(this, "AI không nêu rõ tên bộ lọc", Toast.LENGTH_SHORT).show();
+            return;
+        }
         FilterPreset target = null;
         for (FilterPreset.Category category : FilterPreset.CATEGORIES) {
             for (FilterPreset variant : category.variants) {
-                if (variant.displayName.equalsIgnoreCase(filterName)) {
+                if (variant.displayName.equalsIgnoreCase(name)) {
                     target = variant;
                     break;
                 }
@@ -2271,7 +2470,7 @@ public class EditorActivity extends AppCompatActivity {
             if (target != null) break;
         }
         if (target == null) {
-            Toast.makeText(this, "Không tìm thấy bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Không tìm thấy bộ lọc: " + name, Toast.LENGTH_SHORT).show();
             return;
         }
         if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
@@ -2297,35 +2496,92 @@ public class EditorActivity extends AppCompatActivity {
         return out;
     }
 
+    /**
+     * Áp dụng 1 chỉnh số đơn lẻ (path local handler hoặc fallback schema cũ).
+     * QUAN TRỌNG: phải mở panel TRƯỚC khi set giá trị — vì click handler của btnAdjust
+     * gọi {@code resetAdjustValues()} sẽ xoá mọi value vừa set. Bug này tồn tại từ trước
+     * khiến mọi yêu cầu AI ADJUST không hề có hiệu lực khi panel chưa mở.
+     */
     private void applyAiAdjustment(String property, int value) {
         if (property == null) return;
-        int internalValue = Math.max(-50, Math.min(50, value));
-        int targetMode;
-        switch (property.toLowerCase()) {
-            case "brightness": brightnessValue = internalValue; targetMode = MODE_BRIGHTNESS; break;
-            case "contrast": contrastValue = internalValue; targetMode = MODE_CONTRAST; break;
-            case "saturation": saturationValue = internalValue; targetMode = MODE_SATURATION; break;
-            case "sharpness": sharpnessValue = internalValue; targetMode = MODE_SHARPNESS; break;
-            case "clarity": clarityValue = internalValue; targetMode = MODE_CLARITY; break;
-            case "hsl": hslValue = internalValue; targetMode = MODE_HSL; break;
-            case "highlights": highlightsValue = internalValue; targetMode = MODE_HIGHLIGHTS; break;
-            case "shadows": shadowsValue = internalValue; targetMode = MODE_SHADOWS; break;
-            case "temperature": tempValue = internalValue; targetMode = MODE_TEMP; break;
-            case "hue": hueValue = internalValue; targetMode = MODE_HUE; break;
-            case "fade": fadeValue = internalValue; targetMode = MODE_FADE; break;
-            case "vignette": vignetteValue = internalValue; targetMode = MODE_VIGNETTE; break;
-            case "grain": grainValue = internalValue; targetMode = MODE_GRAIN; break;
-            default:
-                Toast.makeText(this, "Không hỗ trợ chỉnh: " + property, Toast.LENGTH_SHORT).show();
-                return;
-        }
         if (adjustPanel.getVisibility() != View.VISIBLE) {
             findViewById(R.id.btnAdjust).performClick();
         }
         if (adjustPanel.getVisibility() != View.VISIBLE) return;
-        selectAdjustMode(targetMode);
+
+        Integer mode = setAdjustValueByProperty(property, value);
+        if (mode == null) {
+            Toast.makeText(this, "Không hỗ trợ chỉnh: " + property, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        selectAdjustMode(mode);
         applyColorAdjustments();
-        if (isHeavyMode(targetMode)) rebuildConvolutionBitmap();
-        Toast.makeText(this, "AI: Đã chỉnh " + property + " = " + internalValue, Toast.LENGTH_SHORT).show();
+        if (isHeavyMode(mode)) rebuildConvolutionBitmap();
+        Toast.makeText(this, "AI: Đã chỉnh " + property + " = "
+                + Math.max(-50, Math.min(50, value)), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Áp dụng nhiều chỉnh số trong cùng 1 lần (multi-adjust từ AI).
+     * - Mở panel duy nhất 1 lần (tránh reset liên tiếp).
+     * - Gộp tất cả thay đổi rồi gọi {@code applyColorAdjustments()} 1 lần.
+     * - Chỉ rebuild convolution nếu có ít nhất 1 mode nặng.
+     * - Toast tổng hợp 1 lần thay vì N lần.
+     */
+    private void applyAiAdjustments(String[] props, int[] values) {
+        if (props == null || values == null || props.length != values.length || props.length == 0) return;
+        if (adjustPanel.getVisibility() != View.VISIBLE) {
+            findViewById(R.id.btnAdjust).performClick();
+        }
+        if (adjustPanel.getVisibility() != View.VISIBLE) return;
+
+        int lastMode = MODE_BRIGHTNESS;
+        boolean anyApplied = false;
+        boolean anyHeavy = false;
+        StringBuilder report = new StringBuilder("AI: ");
+        for (int i = 0; i < props.length; i++) {
+            Integer m = setAdjustValueByProperty(props[i], values[i]);
+            if (m == null) continue;
+            lastMode = m;
+            anyApplied = true;
+            if (isHeavyMode(m)) anyHeavy = true;
+            if (report.length() > 4) report.append(", ");
+            report.append(props[i]).append("=").append(Math.max(-50, Math.min(50, values[i])));
+        }
+        if (!anyApplied) {
+            Toast.makeText(this, "Không có thuộc tính hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        selectAdjustMode(lastMode);
+        applyColorAdjustments();
+        if (anyHeavy) rebuildConvolutionBitmap();
+        Toast.makeText(this, report.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Set internal adjust value cho 1 property name. Trả về MODE_* tương ứng,
+     * hoặc null nếu property không hỗ trợ. Aliases: exposure→brightness, temp→temperature.
+     */
+    private Integer setAdjustValueByProperty(String property, int value) {
+        if (property == null) return null;
+        int v = Math.max(-50, Math.min(50, value));
+        switch (property.toLowerCase().trim()) {
+            case "brightness":
+            case "exposure":   brightnessValue = v;  return MODE_BRIGHTNESS;
+            case "contrast":   contrastValue = v;    return MODE_CONTRAST;
+            case "saturation": saturationValue = v;  return MODE_SATURATION;
+            case "sharpness":  sharpnessValue = v;   return MODE_SHARPNESS;
+            case "clarity":    clarityValue = v;     return MODE_CLARITY;
+            case "hsl":        hslValue = v;         return MODE_HSL;
+            case "highlights": highlightsValue = v;  return MODE_HIGHLIGHTS;
+            case "shadows":    shadowsValue = v;     return MODE_SHADOWS;
+            case "temperature":
+            case "temp":       tempValue = v;        return MODE_TEMP;
+            case "hue":        hueValue = v;         return MODE_HUE;
+            case "fade":       fadeValue = v;        return MODE_FADE;
+            case "vignette":   vignetteValue = v;    return MODE_VIGNETTE;
+            case "grain":      grainValue = v;       return MODE_GRAIN;
+            default:           return null;
+        }
     }
 }
