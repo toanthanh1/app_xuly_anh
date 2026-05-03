@@ -164,8 +164,20 @@ public class EditorActivity extends AppCompatActivity {
     private int currentBrushOpacity = 100;
     private View selectedBrushColorView;
     private static final int[] BRUSH_COLORS = new int[]{
-            0xFF000000, 0xFFFFFFFF, 0xFFE53935, 0xFFFB8C00, 0xFFFFEB3B,
-            0xFF43A047, 0xFF1E88E5, 0xFF8E24AA, 0xFFEC407A, 0xFF6D4C41
+            // Đen và trắng
+            0xFF000000, 0xFFFFFFFF,
+            // Đỏ - các tone
+            0xFFFF0000, 0xFFE53935, 0xFFC62828, 0xFFB71C1C, 0xFFFF5252, 0xFFFF1744, 0xFFE91E63, 0xFFFF6090,
+            // Cam - các tone
+            0xFFFF6F00, 0xFFFB8C00, 0xFFF57C00, 0xFFE65100, 0xFFFF9800, 0xFFFFB74D, 0xFFFFA726,
+            // Vàng - các tone
+            0xFFFFEB3B, 0xFFFDD835, 0xFFFBC02D, 0xFFF57F17, 0xFFFFF176, 0xFFFFF59D,
+            // Xanh lá - các tone
+            0xFF43A047, 0xFF2E7D32, 0xFF1B5E20, 0xFF4CAF50, 0xFF66BB6A, 0xFF81C784, 0xFFA5D6A7,
+            // Xanh dương - các tone
+            0xFF1E88E5, 0xFF1565C0, 0xFF0D47A1, 0xFF2196F3, 0xFF42A5F5, 0xFF64B5F6, 0xFF90CAF9,
+            // Tím - các tone
+            0xFF8E24AA, 0xFF6A1B9A, 0xFF4A148C, 0xFF9C27B0, 0xFFBA68C8, 0xFFCE93D8
     };
     
     // 30+ màu sắc cho text
