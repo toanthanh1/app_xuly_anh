@@ -1709,6 +1709,33 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/btnSticker"
+                android:layout_width="68dp"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:contentDescription="Sticker"
+                    android:src="@drawable/ic_sticker"
+                    app:tint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Sticker"
+                    android:textColor="@color/white"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnSmartEraser"
                 android:layout_width="68dp"
                 android:layout_height="wrap_content"
@@ -1733,33 +1760,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="Tẩy AI"
-                    android:textColor="@color/white"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnSticker"
-                android:layout_width="68dp"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:paddingVertical="6dp">
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:contentDescription="Sticker"
-                    android:src="@drawable/ic_sticker"
-                    app:tint="@color/white" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Sticker"
                     android:textColor="@color/white"
                     android:textSize="11sp" />
             </LinearLayout>
