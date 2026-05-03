@@ -42,6 +42,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.app_xhinh_anh.R;
+import com.example.app_xhinh_anh.features.ai_assistant.ui.AiAssistantActivity;
+import com.example.app_xhinh_anh.processing.tools.StickerManager;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation;
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmenter;
@@ -66,9 +68,11 @@ import ja.burhanrashid52.photoeditor.ViewType;
 public class EditorActivity extends AppCompatActivity {
 
     private static final String TAG = "EditorActivity";
+    private static final int AI_REQUEST_CODE = 1001;
 
     private PhotoEditorView photoEditorView;
     private PhotoEditor photoEditor;
+    private StickerManager stickerManager;
     private Uri currentImageUri;
     private boolean isBrushMode = false;
     private ImageButton btnUndo, btnRedo;
@@ -246,6 +250,7 @@ public class EditorActivity extends AppCompatActivity {
         });
 
         initViews();
+        stickerManager = new StickerManager(this, photoEditor, photoEditorView);
         String imageUriString = getIntent().getStringExtra("image_uri");
         if (imageUriString != null) {
             currentImageUri = Uri.parse(imageUriString);
@@ -271,9 +276,13 @@ public class EditorActivity extends AppCompatActivity {
             if (brushPanel != null && brushPanel.getVisibility() == View.VISIBLE) {
                 closeBrushPanel();
             }
+            if (textPanel != null && textPanel.getVisibility() == View.VISIBLE) {
+                closeTextPanel();
+            }
             if (smartEraserPanel != null && smartEraserPanel.getVisibility() == View.VISIBLE) {
                 closeSmartEraserPanel();
             }
+            if (stickerManager != null) stickerManager.closeStickerPanel();
             if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
                 Toast.makeText(this, "Chưa có ảnh để chỉnh", Toast.LENGTH_SHORT).show();
                 return;
@@ -660,12 +669,16 @@ public class EditorActivity extends AppCompatActivity {
         if (brushPanel != null && brushPanel.getVisibility() == View.VISIBLE) {
             closeBrushPanel();
         }
+        if (textPanel != null && textPanel.getVisibility() == View.VISIBLE) {
+            closeTextPanel();
+        }
         if (smartEraserPanel != null && smartEraserPanel.getVisibility() == View.VISIBLE) {
             closeSmartEraserPanel();
         }
         if (maskPanel != null && maskPanel.getVisibility() == View.VISIBLE) {
             closeMaskPanel();
         }
+        if (stickerManager != null) stickerManager.closeStickerPanel();
         Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
         if (current == null) return;
 
@@ -752,12 +765,16 @@ public class EditorActivity extends AppCompatActivity {
         if (filterPanel != null && filterPanel.getVisibility() == View.VISIBLE) {
             closeFilterPanel();
         }
+        if (textPanel != null && textPanel.getVisibility() == View.VISIBLE) {
+            closeTextPanel();
+        }
         if (smartEraserPanel != null && smartEraserPanel.getVisibility() == View.VISIBLE) {
             closeSmartEraserPanel();
         }
         if (maskPanel != null && maskPanel.getVisibility() == View.VISIBLE) {
             closeMaskPanel();
         }
+        if (stickerManager != null) stickerManager.closeStickerPanel();
 
         if (brushColorRow.getChildCount() == 0) {
             populateBrushColors();
@@ -1142,6 +1159,36 @@ public class EditorActivity extends AppCompatActivity {
         }
     }
 
+    private void flipImage(int sx, int sy) {
+        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) return;
+        saveBitmapState();
+        Bitmap original = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        Matrix matrix = new Matrix();
+        matrix.postScale(sx, sy);
+        Bitmap flipped = Bitmap.createBitmap(original, 0, 0,
+                original.getWidth(), original.getHeight(), matrix, true);
+        photoEditorView.getSource().setImageBitmap(flipped);
+        Toast.makeText(this, "Đã lật ảnh", Toast.LENGTH_SHORT).show();
+    }
+
+    private void closeAllOverlayPanels() {
+        if (adjustPanel != null && adjustPanel.getVisibility() == View.VISIBLE) {
+            adjustPanel.setVisibility(View.GONE);
+            photoEditorView.getSource().clearColorFilter();
+            if (adjustBaseBitmap != null) {
+                photoEditorView.getSource().setImageBitmap(adjustBaseBitmap);
+            }
+            adjustBaseBitmap = null;
+            adjustBasePreview = null;
+            adjustConvBitmap = null;
+        }
+        if (filterPanel != null && filterPanel.getVisibility() == View.VISIBLE) closeFilterPanel();
+        if (brushPanel != null && brushPanel.getVisibility() == View.VISIBLE) closeBrushPanel();
+        if (textPanel != null && textPanel.getVisibility() == View.VISIBLE) closeTextPanel();
+        if (smartEraserPanel != null && smartEraserPanel.getVisibility() == View.VISIBLE) closeSmartEraserPanel();
+        if (maskPanel != null && maskPanel.getVisibility() == View.VISIBLE) closeMaskPanel();
+    }
+
     /** Đẩy một bitmap cụ thể (không nhất thiết là bitmap đang hiển thị) vào undo stack. */
     private void pushUndoBitmap(Bitmap bitmap) {
         if (bitmap == null) return;
@@ -1171,13 +1218,15 @@ public class EditorActivity extends AppCompatActivity {
     private void initViews() {
         photoEditorView = findViewById(R.id.photoEditorView);
         LinearLayout btnCrop = findViewById(R.id.btnCrop);
-        LinearLayout btnFlip = findViewById(R.id.btnFlip);
+        LinearLayout btnFlipHorizontal = findViewById(R.id.btnFlipHorizontal);
+        LinearLayout btnFlipVertical = findViewById(R.id.btnFlipVertical);
         LinearLayout btnAdjust = findViewById(R.id.btnAdjust);
         LinearLayout btnFilter = findViewById(R.id.btnFilter);
         LinearLayout btnBrush = findViewById(R.id.btnBrush);
         LinearLayout btnAddText = findViewById(R.id.btnAddText);
         LinearLayout btnSticker = findViewById(R.id.btnSticker);
         LinearLayout btnSmartEraser = findViewById(R.id.btnSmartEraser);
+        LinearLayout btnAiAssistant = findViewById(R.id.btnAiAssistant);
         labelBrush = findViewById(R.id.labelBrush);
         iconBrush = findViewById(R.id.iconBrush);
 
@@ -1329,18 +1378,8 @@ public class EditorActivity extends AppCompatActivity {
 
         btnCrop.setOnClickListener(v -> startCrop(currentImageUri));
         
-        btnFlip.setOnClickListener(v -> {
-            saveBitmapState();
-            if (photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
-                Bitmap originalBitmap = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
-                Matrix matrix = new Matrix();
-                matrix.postScale(-1, 1);
-                Bitmap flippedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0, 
-                        originalBitmap.getWidth(), originalBitmap.getHeight(), matrix, true);
-                photoEditorView.getSource().setImageBitmap(flippedBitmap);
-                Toast.makeText(this, "Đã lật ảnh", Toast.LENGTH_SHORT).show();
-            }
-        });
+        btnFlipHorizontal.setOnClickListener(v -> flipImage(-1, 1));
+        btnFlipVertical.setOnClickListener(v -> flipImage(1, -1));
         // Tác vụ Undo — route theo loại thao tác cuối cùng (BITMAP hay VIEW)
         btnUndo.setOnClickListener(v -> {
             if (undoOpStack.isEmpty()) return;
@@ -1399,10 +1438,18 @@ public class EditorActivity extends AppCompatActivity {
         btnAddText.setOnClickListener(v -> openTextPanel());
         btnFilter.setOnClickListener(v -> openFilterPanel());
 
-        btnSticker.setOnClickListener(v ->
-                Toast.makeText(this, "Tính năng Sticker/Icon sẽ cần thêm bộ icon", Toast.LENGTH_SHORT).show());
+        btnSticker.setOnClickListener(v -> {
+            if (stickerManager.isPanelVisible()) {
+                stickerManager.closeStickerPanel();
+                return;
+            }
+            closeAllOverlayPanels();
+            stickerManager.openStickerPanel();
+        });
 
         btnSmartEraser.setOnClickListener(v -> openSmartEraserPanel());
+        btnAiAssistant.setOnClickListener(v ->
+                startActivityForResult(new Intent(this, AiAssistantActivity.class), AI_REQUEST_CODE));
         btnSmartEraserAi.setOnClickListener(v -> openMaskPanel());
         btnRemoveBackground.setOnClickListener(v -> applyRemoveBackground());
         btnSmartEraserCancel.setOnClickListener(v -> closeSmartEraserPanel());
@@ -1512,6 +1559,7 @@ public class EditorActivity extends AppCompatActivity {
         if (maskPanel != null && maskPanel.getVisibility() == View.VISIBLE) {
             closeMaskPanel();
         }
+        if (stickerManager != null) stickerManager.closeStickerPanel();
         if (textFontRow.getChildCount() == 0) populateTextFontRow();
         if (textColorRow.getChildCount() == 0) populateTextColorRow();
         selectTextTab(currentTextTab);
@@ -1555,6 +1603,7 @@ public class EditorActivity extends AppCompatActivity {
         if (textPanel != null && textPanel.getVisibility() == View.VISIBLE) {
             closeTextPanel();
         }
+        if (stickerManager != null) stickerManager.closeStickerPanel();
         int active = ContextCompat.getColor(this, R.color.brand_green);
         iconSmartEraser.setColorFilter(active);
         labelSmartEraser.setTextColor(active);
@@ -1582,6 +1631,10 @@ public class EditorActivity extends AppCompatActivity {
         if (maskPanel != null && maskPanel.getVisibility() == View.VISIBLE) {
             closeMaskPanel();
         }
+        if (textPanel != null && textPanel.getVisibility() == View.VISIBLE) {
+            closeTextPanel();
+        }
+        if (stickerManager != null) stickerManager.closeStickerPanel();
         maskOverlayView.clearMask();
         maskOverlayView.setBrushRadius(MASK_BRUSH_DEFAULT);
         maskBrushSizeSeek.setProgress(MASK_BRUSH_DEFAULT);
@@ -1968,6 +2021,84 @@ public class EditorActivity extends AppCompatActivity {
                 currentImageUri = resultUri;
                 photoEditorView.getSource().setImageURI(currentImageUri);
             }
+        } else if (resultCode == RESULT_OK && requestCode == AI_REQUEST_CODE && data != null) {
+            String action = data.getStringExtra("action");
+            if ("APPLY_FILTER".equals(action)) {
+                applyAiFilter(data.getStringExtra("filter_name"));
+            } else if ("ADJUST".equals(action)) {
+                applyAiAdjustment(data.getStringExtra("property"), data.getIntExtra("value", 0));
+            }
         }
+    }
+
+    private void applyAiFilter(String filterName) {
+        if (filterName == null) return;
+        FilterPreset target = null;
+        for (FilterPreset.Category category : FilterPreset.CATEGORIES) {
+            for (FilterPreset variant : category.variants) {
+                if (variant.displayName.equalsIgnoreCase(filterName)) {
+                    target = variant;
+                    break;
+                }
+            }
+            if (target != null) break;
+        }
+        if (target == null) {
+            Toast.makeText(this, "Không tìm thấy bộ lọc: " + filterName, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!(photoEditorView.getSource().getDrawable() instanceof BitmapDrawable)) {
+            Toast.makeText(this, "Chưa có ảnh để áp dụng bộ lọc", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        saveBitmapState();
+        Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+        Bitmap result = (target.matrix != null)
+                ? applyColorMatrixToBitmap(current, target.matrix)
+                : copyBitmap(current);
+        photoEditorView.getSource().setImageBitmap(result);
+        photoEditorView.getSource().clearColorFilter();
+        Toast.makeText(this, "AI: Đã áp dụng bộ lọc " + filterName, Toast.LENGTH_SHORT).show();
+    }
+
+    private Bitmap applyColorMatrixToBitmap(Bitmap src, float[] matrix) {
+        Bitmap out = Bitmap.createBitmap(src.getWidth(), src.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(out);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColorFilter(new ColorMatrixColorFilter(new ColorMatrix(matrix)));
+        canvas.drawBitmap(src, 0, 0, paint);
+        return out;
+    }
+
+    private void applyAiAdjustment(String property, int value) {
+        if (property == null) return;
+        int internalValue = Math.max(-50, Math.min(50, value));
+        int targetMode;
+        switch (property.toLowerCase()) {
+            case "brightness": brightnessValue = internalValue; targetMode = MODE_BRIGHTNESS; break;
+            case "contrast": contrastValue = internalValue; targetMode = MODE_CONTRAST; break;
+            case "saturation": saturationValue = internalValue; targetMode = MODE_SATURATION; break;
+            case "sharpness": sharpnessValue = internalValue; targetMode = MODE_SHARPNESS; break;
+            case "clarity": clarityValue = internalValue; targetMode = MODE_CLARITY; break;
+            case "hsl": hslValue = internalValue; targetMode = MODE_HSL; break;
+            case "highlights": highlightsValue = internalValue; targetMode = MODE_HIGHLIGHTS; break;
+            case "shadows": shadowsValue = internalValue; targetMode = MODE_SHADOWS; break;
+            case "temperature": tempValue = internalValue; targetMode = MODE_TEMP; break;
+            case "hue": hueValue = internalValue; targetMode = MODE_HUE; break;
+            case "fade": fadeValue = internalValue; targetMode = MODE_FADE; break;
+            case "vignette": vignetteValue = internalValue; targetMode = MODE_VIGNETTE; break;
+            case "grain": grainValue = internalValue; targetMode = MODE_GRAIN; break;
+            default:
+                Toast.makeText(this, "Không hỗ trợ chỉnh: " + property, Toast.LENGTH_SHORT).show();
+                return;
+        }
+        if (adjustPanel.getVisibility() != View.VISIBLE) {
+            findViewById(R.id.btnAdjust).performClick();
+        }
+        if (adjustPanel.getVisibility() != View.VISIBLE) return;
+        selectAdjustMode(targetMode);
+        applyColorAdjustments();
+        if (isHeavyMode(targetMode)) rebuildConvolutionBitmap();
+        Toast.makeText(this, "AI: Đã chỉnh " + property + " = " + internalValue, Toast.LENGTH_SHORT).show();
     }
 }
