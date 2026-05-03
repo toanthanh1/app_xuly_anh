@@ -1,5 +1,6 @@
 package com.example.app_xhinh_anh.ui.editor;
 
+import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -239,6 +240,30 @@ public class EditorActivity extends AppCompatActivity {
     private TextView maskBrushSizeValue;
     private static final int MASK_BRUSH_DEFAULT = 30;
     private boolean isAiErasing = false;
+
+    private Dialog loadingDialog;
+
+    public void showLoadingDialog(String message) {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+        loadingDialog = new Dialog(this, R.style.TransparentDialog);
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_loading_dialog, null);
+        TextView tvMessage = view.findViewById(R.id.tvLoadingMessage);
+        if (tvMessage != null) tvMessage.setText(message);
+        loadingDialog.setContentView(view);
+        loadingDialog.setCancelable(false);
+        if (loadingDialog.getWindow() != null) {
+            loadingDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        loadingDialog.show();
+    }
+
+    public void dismissLoadingDialog() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
+    }
 
     private static final class FontDef {
         final String name;
@@ -635,27 +660,37 @@ public class EditorActivity extends AppCompatActivity {
     /** Khi bấm "Xong": chạy lại pipeline ở full-resolution (chỉ 1 lần) để bake kết quả cuối. */
     private void bakeAdjustments() {
         if (adjustBaseBitmap == null) return;
-        // 0. Lưu trạng thái trước khi bake để undo có thể quay về
-        pushUndoBitmap(adjustBaseBitmap);
-        // 1. Pipeline nặng ở full-res
-        Bitmap full = applyHeavyPipeline(adjustBaseBitmap);
-        // 2. Bake ColorMatrix (nếu có thay đổi) vào bitmap
-        boolean hasColorMatrix = brightnessValue != 0 || contrastValue != 0
-                || saturationValue != 0 || hslValue != 0
-                || tempValue != 0 || hueValue != 0;
-        Bitmap finalBitmap;
-        if (hasColorMatrix) {
-            finalBitmap = Bitmap.createBitmap(full.getWidth(), full.getHeight(),
-                    Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(finalBitmap);
-            Paint paint = new Paint();
-            paint.setColorFilter(new ColorMatrixColorFilter(buildColorMatrix()));
-            canvas.drawBitmap(full, 0, 0, paint);
-        } else {
-            finalBitmap = full;
-        }
-        photoEditorView.getSource().clearColorFilter();
-        photoEditorView.getSource().setImageBitmap(finalBitmap);
+        showLoadingDialog("Đang áp dụng thay đổi...");
+        
+        new Thread(() -> {
+            // 0. Lưu trạng thái trước khi bake để undo có thể quay về
+            runOnUiThread(() -> pushUndoBitmap(adjustBaseBitmap));
+            
+            // 1. Pipeline nặng ở full-res
+            Bitmap full = applyHeavyPipeline(adjustBaseBitmap);
+            
+            // 2. Bake ColorMatrix (nếu có thay đổi) vào bitmap
+            boolean hasColorMatrix = brightnessValue != 0 || contrastValue != 0
+                    || saturationValue != 0 || hslValue != 0
+                    || tempValue != 0 || hueValue != 0;
+            Bitmap finalBitmap;
+            if (hasColorMatrix) {
+                finalBitmap = Bitmap.createBitmap(full.getWidth(), full.getHeight(),
+                        Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(finalBitmap);
+                Paint paint = new Paint();
+                paint.setColorFilter(new ColorMatrixColorFilter(buildColorMatrix()));
+                canvas.drawBitmap(full, 0, 0, paint);
+            } else {
+                finalBitmap = full;
+            }
+
+            runOnUiThread(() -> {
+                photoEditorView.getSource().clearColorFilter();
+                photoEditorView.getSource().setImageBitmap(finalBitmap);
+                dismissLoadingDialog();
+            });
+        }).start();
     }
 
     // ============================================================
@@ -1001,11 +1036,19 @@ public class EditorActivity extends AppCompatActivity {
     /** Bake filter ở full-resolution rồi gán lại cho ImageView. */
     private void bakeFilter() {
         if (selectedVariant == null || selectedVariant.matrix == null || filterBaseBitmap == null) return;
-        pushUndoBitmap(filterBaseBitmap);
-        float t = filterIntensity / 100f;
-        Bitmap full = applyMatrixToBitmap(filterBaseBitmap, lerpToIdentity(selectedVariant.matrix, t));
-        photoEditorView.getSource().clearColorFilter();
-        photoEditorView.getSource().setImageBitmap(full);
+        showLoadingDialog("Đang áp dụng bộ lọc...");
+
+        new Thread(() -> {
+            runOnUiThread(() -> pushUndoBitmap(filterBaseBitmap));
+            float t = filterIntensity / 100f;
+            Bitmap full = applyMatrixToBitmap(filterBaseBitmap, lerpToIdentity(selectedVariant.matrix, t));
+
+            runOnUiThread(() -> {
+                photoEditorView.getSource().clearColorFilter();
+                photoEditorView.getSource().setImageBitmap(full);
+                dismissLoadingDialog();
+            });
+        }).start();
     }
 
     /** Nội suy tuyến tính giữa identity matrix và target — dùng để "pha loãng" filter theo cường độ. */
@@ -1762,7 +1805,7 @@ public class EditorActivity extends AppCompatActivity {
         }
 
         isAiErasing = true;
-        Toast.makeText(this, "Đang xử lý Tẩy AI...", Toast.LENGTH_SHORT).show();
+        showLoadingDialog("Đang xử lý Tẩy AI...");
         final Bitmap srcCopy = copyBitmap(current);
         new Thread(() -> {
             Bitmap result;
@@ -1776,6 +1819,7 @@ public class EditorActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 isAiErasing = false;
                 maskBmp.recycle();
+                dismissLoadingDialog();
                 if (out == null) {
                     Toast.makeText(this, "Tẩy AI thất bại", Toast.LENGTH_SHORT).show();
                     return;
@@ -1798,7 +1842,7 @@ public class EditorActivity extends AppCompatActivity {
         }
         Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
         if (current == null) return;
-        Toast.makeText(this, "Đang tách chủ thể...", Toast.LENGTH_SHORT).show();
+        showLoadingDialog("Đang tách chủ thể...");
 
         SubjectSegmenterOptions options = new SubjectSegmenterOptions.Builder()
                 .enableForegroundBitmap()
@@ -1809,6 +1853,7 @@ public class EditorActivity extends AppCompatActivity {
         final Bitmap srcRef = current;
         segmenter.process(input)
                 .addOnSuccessListener(result -> {
+                    dismissLoadingDialog();
                     Bitmap fg = result.getForegroundBitmap();
                     if (fg == null) {
                         Toast.makeText(this, "Không tách được chủ thể", Toast.LENGTH_SHORT).show();
@@ -1825,6 +1870,7 @@ public class EditorActivity extends AppCompatActivity {
                     Toast.makeText(this, "Đã xóa phông", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
+                    dismissLoadingDialog();
                     Log.e(TAG, "Subject segmentation failed", e);
                     Toast.makeText(this,
                             "Xóa phông thất bại: " + e.getMessage(),
@@ -2024,6 +2070,7 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     private void saveProcessedImage() {
+        showLoadingDialog("Đang chuẩn bị lưu ảnh...");
         File file = new File(getCacheDir(), "EditedImage_" + System.currentTimeMillis() + ".jpg");
         try {
             SaveSettings saveSettings = new SaveSettings.Builder()
@@ -2039,10 +2086,12 @@ public class EditorActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(@NonNull Exception exception) {
+                    dismissLoadingDialog();
                     Toast.makeText(EditorActivity.this, "Lỗi khi lưu ảnh", Toast.LENGTH_SHORT).show();
                 }
             });
         } catch (SecurityException e) {
+            dismissLoadingDialog();
             Log.e(TAG, "Lỗi quyền khi lưu ảnh", e);
         }
     }
@@ -2064,6 +2113,7 @@ public class EditorActivity extends AppCompatActivity {
             try (OutputStream out = resolver.openOutputStream(itemUri);
                  InputStream in = resolver.openInputStream(uri)) {
                 if (in == null || out == null) {
+                    dismissLoadingDialog();
                     Toast.makeText(this, "Không mở được luồng ảnh", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -2077,9 +2127,11 @@ public class EditorActivity extends AppCompatActivity {
                     values.put(MediaStore.Images.Media.IS_PENDING, 0);
                     resolver.update(itemUri, values, null, null);
                 }
+                dismissLoadingDialog();
                 Toast.makeText(this, "Đã lưu ảnh vào thư viện!", Toast.LENGTH_SHORT).show();
                 finish();
             } catch (Exception e) {
+                dismissLoadingDialog();
                 Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
