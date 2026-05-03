@@ -1142,6 +1142,16 @@
                     android:contentDescription="Nghiêng"
                     android:src="@drawable/ic_format_italic"
                     app:tint="@color/white" />
+
+                <ImageButton
+                    android:id="@+id/btnTextUnderline"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Gạch dưới"
+                    android:src="@drawable/ic_format_underline"
+                    app:tint="@color/white" />
             </LinearLayout>
 
             <LinearLayout

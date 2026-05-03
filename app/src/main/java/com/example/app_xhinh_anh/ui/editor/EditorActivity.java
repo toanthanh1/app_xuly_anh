@@ -178,7 +178,7 @@ public class EditorActivity extends AppCompatActivity {
     private LinearLayout textFontRow, textColorRow;
     private SeekBar textSizeSeek;
     private TextView textSizeValueText;
-    private ImageButton btnTextBold, btnTextItalic;
+    private ImageButton btnTextBold, btnTextItalic, btnTextUnderline;
     private ImageButton btnTextAlignLeft, btnTextAlignCenter, btnTextAlignRight;
     private static final int TEXT_TAB_FONT = 0;
     private static final int TEXT_TAB_COLOR = 1;
@@ -190,6 +190,7 @@ public class EditorActivity extends AppCompatActivity {
     private int currentTextColor = 0xFFFFFFFF;
     private boolean isTextBold = false;
     private boolean isTextItalic = false;
+    private boolean isTextUnderline = false;
     private int currentTextAlign = Gravity.CENTER;
     private int currentTextSize = 32;
     private View selectedTextFontView;
@@ -1362,6 +1363,7 @@ public class EditorActivity extends AppCompatActivity {
         textSizeValueText = findViewById(R.id.textSizeValueText);
         btnTextBold = findViewById(R.id.btnTextBold);
         btnTextItalic = findViewById(R.id.btnTextItalic);
+        btnTextUnderline = findViewById(R.id.btnTextUnderline);
         btnTextAlignLeft = findViewById(R.id.btnTextAlignLeft);
         btnTextAlignCenter = findViewById(R.id.btnTextAlignCenter);
         btnTextAlignRight = findViewById(R.id.btnTextAlignRight);
@@ -1482,6 +1484,13 @@ public class EditorActivity extends AppCompatActivity {
                     : ContextCompat.getColor(this, R.color.white));
         });
 
+        btnTextUnderline.setOnClickListener(v -> {
+            isTextUnderline = !isTextUnderline;
+            btnTextUnderline.setColorFilter(isTextUnderline
+                    ? ContextCompat.getColor(this, R.color.brand_green)
+                    : ContextCompat.getColor(this, R.color.white));
+        });
+
         btnTextAlignLeft.setOnClickListener(v -> {
             currentTextAlign = Gravity.START;
             updateTextAlignTints();
@@ -1526,7 +1535,14 @@ public class EditorActivity extends AppCompatActivity {
             else if (isTextItalic) style = Typeface.ITALIC;
             if (style != Typeface.NORMAL) builder.withTextStyle(style);
             builder.withGravity(currentTextAlign | Gravity.CENTER_VERTICAL);
+            
             photoEditor.addText(text, builder);
+            
+            // Áp dụng underline sau khi addText nếu được chọn
+            if (isTextUnderline) {
+                applyUnderlineToLastTextView();
+            }
+            
             textInput.setText("");
             closeTextPanel();
         });
@@ -1560,15 +1576,22 @@ public class EditorActivity extends AppCompatActivity {
             closeMaskPanel();
         }
         if (stickerManager != null) stickerManager.closeStickerPanel();
+        
+        // Reset text formatting
+        isTextBold = false;
+        isTextItalic = false;
+        isTextUnderline = false;
+        
         if (textFontRow.getChildCount() == 0) populateTextFontRow();
         if (textColorRow.getChildCount() == 0) populateTextColorRow();
         selectTextTab(currentTextTab);
         updateTextAlignTints();
-        // Sync trạng thái nút Bold/Italic theo state hiện tại
+        // Sync trạng thái nút Bold/Italic/Underline theo state hiện tại
         int active = ContextCompat.getColor(this, R.color.brand_green);
         int inactive = ContextCompat.getColor(this, R.color.white);
         btnTextBold.setColorFilter(isTextBold ? active : inactive);
         btnTextItalic.setColorFilter(isTextItalic ? active : inactive);
+        btnTextUnderline.setColorFilter(isTextUnderline ? active : inactive);
         textSizeSeek.setProgress(currentTextSize);
         textSizeValueText.setText(String.valueOf(currentTextSize));
         textPanel.setVisibility(View.VISIBLE);
@@ -1580,6 +1603,26 @@ public class EditorActivity extends AppCompatActivity {
                 (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm != null && textInput != null) {
             imm.hideSoftInputFromWindow(textInput.getWindowToken(), 0);
+        }
+    }
+
+    private void applyUnderlineToLastTextView() {
+        // Lấy view cuối cùng được thêm vào photoEditorView
+        int childCount = photoEditorView.getChildCount();
+        if (childCount == 0) return;
+        
+        // Tìm TextView cuối cùng (view mới thêm)
+        for (int i = childCount - 1; i >= 0; i--) {
+            View child = photoEditorView.getChildAt(i);
+            if (child instanceof TextView) {
+                TextView textView = (TextView) child;
+                int flags = textView.getPaintFlags();
+                // Thêm UNDERLINE_TEXT_FLAG nếu chưa có
+                if ((flags & Paint.UNDERLINE_TEXT_FLAG) == 0) {
+                    textView.setPaintFlags(flags | Paint.UNDERLINE_TEXT_FLAG);
+                }
+                break;
+            }
         }
     }
 
