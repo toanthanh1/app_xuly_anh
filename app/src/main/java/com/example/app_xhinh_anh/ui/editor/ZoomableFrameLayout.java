@@ -48,9 +48,7 @@ public class ZoomableFrameLayout extends FrameLayout {
                 if (currentScale > 1f) {
                     resetZoom();
                 } else {
-                    currentScale = 2f;
-                    clampPan();
-                    applyTransform();
+                    zoomTo(2f, e.getX(), e.getY());
                 }
                 return true;
             }
@@ -66,10 +64,8 @@ public class ZoomableFrameLayout extends FrameLayout {
 
         @Override
         public boolean onScale(ScaleGestureDetector detector) {
-            float next = currentScale * detector.getScaleFactor();
-            currentScale = Math.max(MIN_SCALE, Math.min(next, MAX_SCALE));
-            clampPan();
-            applyTransform();
+            zoomTo(currentScale * detector.getScaleFactor(),
+                    detector.getFocusX(), detector.getFocusY());
             return true;
         }
 
@@ -79,6 +75,28 @@ public class ZoomableFrameLayout extends FrameLayout {
             clampPan();
             applyTransform();
         }
+    }
+
+    /**
+     * Đặt zoom tới {@code targetScale} đồng thời giữ điểm (focusX, focusY) trong toạ độ
+     * view ổn định trên màn hình — đây là cách pinch-to-zoom "tự nhiên".
+     *
+     * Vị trí trên màn hình của 1 điểm (vx, vy) sau biến đổi của View (pivot ở giữa view) là:
+     *     screen = (v - pivot) * scale + pivot + pan
+     * Muốn screen không đổi khi scale S → S':
+     *     pan' = pan + (v - pivot) * (S - S')
+     */
+    private void zoomTo(float targetScale, float focusX, float focusY) {
+        float oldScale = currentScale;
+        float newScale = Math.max(MIN_SCALE, Math.min(targetScale, MAX_SCALE));
+        if (newScale == oldScale) return;
+        float pivotX = getWidth() / 2f;
+        float pivotY = getHeight() / 2f;
+        panX += (focusX - pivotX) * (oldScale - newScale);
+        panY += (focusY - pivotY) * (oldScale - newScale);
+        currentScale = newScale;
+        clampPan();
+        applyTransform();
     }
 
     private void applyTransform() {
@@ -108,10 +126,13 @@ public class ZoomableFrameLayout extends FrameLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        // Double-tap để reset / nhanh phóng 2x
-        tapDetector.onTouchEvent(ev);
-
         int action = ev.getActionMasked();
+
+        // Double-tap chỉ có nghĩa khi đang ở chế độ 1 ngón — bỏ qua khi đang pinch
+        // để GestureDetector không nhầm chuỗi tap-tap thành double-tap giữa lúc thao tác 2 ngón.
+        if (!twoFingerActive && ev.getPointerCount() == 1) {
+            tapDetector.onTouchEvent(ev);
+        }
 
         if (action == MotionEvent.ACTION_POINTER_DOWN && ev.getPointerCount() == 2) {
             twoFingerActive = true;

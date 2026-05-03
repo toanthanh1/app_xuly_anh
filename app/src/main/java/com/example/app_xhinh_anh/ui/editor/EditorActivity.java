@@ -1864,32 +1864,70 @@ public class EditorActivity extends AppCompatActivity {
     }
 
     /**
-     * Danh sách 20 font đại diện cho các nhóm Sans / Serif / Mono / Casual / Cursive.
+     * Danh sách 50+ font đại diện cho các nhóm Sans / Serif / Mono / Casual / Cursive.
      */
     private void buildTextFontList() {
         if (textFontList != null) return;
         textFontList = new ArrayList<>();
         String[][] fonts = {
+                // Sans-serif family (16 fonts)
                 {"sans-serif",                 "Sans",            "0"},
                 {"sans-serif",                 "Sans Đậm",        "1"},
                 {"sans-serif",                 "Sans Ng.",        "2"},
                 {"sans-serif",                 "Sans Đậm/Ng.",    "3"},
                 {"sans-serif-light",           "Sans Light",      "0"},
+                {"sans-serif-light",           "Sans Light Ng.",  "2"},
                 {"sans-serif-thin",            "Sans Thin",       "0"},
+                {"sans-serif-thin",            "Sans Thin Ng.",   "2"},
                 {"sans-serif-medium",          "Sans Medium",     "0"},
+                {"sans-serif-medium",          "Sans Medium Ng.", "2"},
                 {"sans-serif-black",           "Sans Black",      "0"},
+                {"sans-serif-black",           "Sans Black Ng.",  "2"},
                 {"sans-serif-condensed",       "Sans Hẹp",        "0"},
                 {"sans-serif-condensed",       "Sans Hẹp Đậm",    "1"},
+                {"sans-serif-condensed-light", "Sans Hẹp Light",  "0"},
                 {"sans-serif-smallcaps",       "Sans Smallcaps",  "0"},
+                // Serif family (12 fonts)
                 {"serif",                      "Serif",           "0"},
                 {"serif",                      "Serif Đậm",       "1"},
                 {"serif",                      "Serif Ng.",       "2"},
                 {"serif",                      "Serif Đậm/Ng.",   "3"},
+                {"serif",                      "Serif Light",     "0"},
+                {"serif",                      "Serif Thin",      "0"},
+                {"serif",                      "Serif Medium",    "0"},
+                {"serif",                      "Serif Black",     "0"},
                 {"serif-monospace",            "Serif Mono",      "0"},
+                {"serif-monospace",            "Serif Mono Đậm",  "1"},
+                {"serif-monospace",            "Serif Mono Ng.",  "2"},
+                {"serif-monospace",            "Serif Mono Đậm/Ng.", "3"},
+                // Monospace family (8 fonts)
                 {"monospace",                  "Mono",            "0"},
                 {"monospace",                  "Mono Đậm",        "1"},
+                {"monospace",                  "Mono Ng.",        "2"},
+                {"monospace",                  "Mono Đậm/Ng.",    "3"},
+                {"monospace",                  "Mono Light",      "0"},
+                {"monospace",                  "Mono Thin",       "0"},
+                {"monospace",                  "Mono Medium",     "0"},
+                {"monospace",                  "Mono Black",      "0"},
+                // Casual family (4 fonts)
                 {"casual",                     "Casual",          "0"},
-                {"cursive",                    "Viết tay",        "0"}
+                {"casual",                     "Casual Đậm",      "1"},
+                {"casual",                     "Casual Ng.",      "2"},
+                {"casual",                     "Casual Đậm/Ng.",  "3"},
+                // Cursive family (4 fonts)
+                {"cursive",                    "Viết tay",        "0"},
+                {"cursive",                    "Viết tay Đậm",    "1"},
+                {"cursive",                    "Viết tay Ng.",    "2"},
+                {"cursive",                    "Viết tay Đậm/Ng.","3"},
+                // System fonts (8 fonts)
+                {"system-ui",                  "System",          "0"},
+                {"ui-monospace",               "UI Mono",         "0"},
+                {"ui-rounded",                 "UI Rounded",      "0"},
+                {"ui-sans-serif",              "UI Sans",         "0"},
+                {"emoji",                      "Emoji",           "0"},
+                {"emoji",                      "Emoji Đậm",       "1"},
+                {"math",                       "Math",            "0"},
+                {"fangsong",                   "Fangsong",        "0"}
         };
         for (String[] f : fonts) {
             int style = Integer.parseInt(f[2]);
@@ -2099,9 +2137,73 @@ public class EditorActivity extends AppCompatActivity {
             if ("APPLY_FILTER".equals(action)) {
                 applyAiFilter(data.getStringExtra("filter_name"));
             } else if ("ADJUST".equals(action)) {
-                applyAiAdjustment(data.getStringExtra("property"), data.getIntExtra("value", 0));
+                // Schema mới (đa thuộc tính) — gửi qua 2 mảng song song.
+                String[] props = data.getStringArrayExtra("adjust_props");
+                int[] values = data.getIntArrayExtra("adjust_values");
+                if (props != null && values != null && props.length == values.length && props.length > 0) {
+                    for (int i = 0; i < props.length; i++) {
+                        applyAiAdjustment(props[i], values[i]);
+                    }
+                } else {
+                    // Fallback schema cũ (đơn thuộc tính) — giữ để tương thích.
+                    applyAiAdjustment(data.getStringExtra("property"), data.getIntExtra("value", 0));
+                }
+            } else if ("OPEN_TOOL".equals(action)) {
+                applyAiOpenTool(data.getStringExtra("tool_name"));
+            } else if ("REMOVE_BACKGROUND".equals(action)) {
+                applyRemoveBackground();
             }
         }
+    }
+
+    /**
+     * Mở công cụ theo yêu cầu của AI. Map tool_name → mode chỉnh / panel tương ứng.
+     */
+    private void applyAiOpenTool(String toolName) {
+        if (toolName == null) return;
+        String t = toolName.toLowerCase().trim();
+        // Nhóm 1: các mode trong panel "Chỉnh"
+        Integer mode = null;
+        switch (t) {
+            case "curves":      mode = MODE_CURVES; break;
+            case "hsl":         mode = MODE_HSL; break;
+            case "highlights":  mode = MODE_HIGHLIGHTS; break;
+            case "shadows":     mode = MODE_SHADOWS; break;
+            case "brightness":  mode = MODE_BRIGHTNESS; break;
+            case "contrast":    mode = MODE_CONTRAST; break;
+            case "saturation":  mode = MODE_SATURATION; break;
+            case "sharpness":   mode = MODE_SHARPNESS; break;
+            case "clarity":     mode = MODE_CLARITY; break;
+            case "temperature": mode = MODE_TEMP; break;
+            case "hue":         mode = MODE_HUE; break;
+            case "fade":        mode = MODE_FADE; break;
+            case "vignette":    mode = MODE_VIGNETTE; break;
+            case "grain":       mode = MODE_GRAIN; break;
+            default: break;
+        }
+        if (mode != null) {
+            if (adjustPanel.getVisibility() != View.VISIBLE) {
+                findViewById(R.id.btnAdjust).performClick();
+            }
+            if (adjustPanel.getVisibility() != View.VISIBLE) return;
+            selectAdjustMode(mode);
+            Toast.makeText(this, "AI: Đã mở " + toolName, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Nhóm 2: các panel khác
+        switch (t) {
+            case "brush":         findViewById(R.id.btnBrush).performClick(); break;
+            case "text":          findViewById(R.id.btnAddText).performClick(); break;
+            case "sticker":       findViewById(R.id.btnSticker).performClick(); break;
+            case "crop":          findViewById(R.id.btnCrop).performClick(); break;
+            case "flip":          findViewById(R.id.btnFlipHorizontal).performClick(); break;
+            case "smart_eraser":  findViewById(R.id.btnSmartEraser).performClick(); break;
+            case "mask":          openMaskPanel(); break;
+            default:
+                Toast.makeText(this, "Không hỗ trợ công cụ: " + toolName, Toast.LENGTH_SHORT).show();
+                return;
+        }
+        Toast.makeText(this, "AI: Đã mở " + toolName, Toast.LENGTH_SHORT).show();
     }
 
     private void applyAiFilter(String filterName) {
