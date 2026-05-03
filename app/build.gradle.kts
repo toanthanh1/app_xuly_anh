@@ -60,7 +60,6 @@ dependencies {
     implementation(libs.glide)
     implementation(libs.ucrop)
     implementation(libs.photoeditor)
-    implementation(libs.mlkit.subject.segmentation)
     implementation(libs.generativeai)
 
     // ML Kit Subject Segmentation (offline) — dùng cho xóa phông nền
