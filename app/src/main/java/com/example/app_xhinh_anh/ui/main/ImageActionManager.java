@@ -89,8 +89,8 @@ public class ImageActionManager {
     }
 
     public void setUpButtons(View rootView) {
-        Button btnPickImage = rootView.findViewById(R.id.btnPickImage);
-        Button btnCaptureImage = rootView.findViewById(R.id.btnCaptureImage);
+        View btnPickImage = rootView.findViewById(R.id.btnPickImage);
+        View btnCaptureImage = rootView.findViewById(R.id.btnCaptureImage);
 
         if (btnPickImage != null) {
             btnPickImage.setOnClickListener(v -> pickImageWithPermission());

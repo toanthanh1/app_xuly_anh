@@ -1,0 +1,81 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Soft Aura/Glow - Vùng sáng rộng hơn để bao phủ icon lớn -->
+    <path
+        android:pathData="M100,100m-98,0a98,98 0,1 1,196 0a98,98 0,1 1,-196 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="100"
+                android:centerY="100"
+                android:gradientRadius="100"
+                android:type="radial">
+                <item android:color="#4099CC33" android:offset="0.2" />
+                <item android:color="#1099CC33" android:offset="0.7" />
+                <item android:color="#0099CC33" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Camera Body - Phóng to thân máy -->
+    <path
+        android:pathData="M35,70 H165 Q175,70 175,80 V150 Q175,160 165,160 H35 Q25,160 25,150 V80 Q25,70 35,70 Z"
+        android:strokeWidth="1"
+        android:strokeColor="#60FFFFFF">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="100"
+                android:endY="160"
+                android:startX="100"
+                android:startY="70"
+                android:type="linear">
+                <item android:color="#3A3A3A" android:offset="0" />
+                <item android:color="#1A1A1A" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Viewfinder - Phóng to kính ngắm -->
+    <path
+        android:fillColor="#444444"
+        android:pathData="M85,70 L88,58 H112 L115,70 Z" />
+
+    <!-- Camera Lens - Outer - Phóng to ống kính -->
+    <path
+        android:pathData="M100,115m-38,0a38,38 0,1 1,76 0a38,38 0,1 1,-76 0"
+        android:strokeWidth="5"
+        android:strokeColor="@color/brand_green" />
+
+    <!-- Camera Lens - Inner Iris -->
+    <path
+        android:pathData="M100,115m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="115"
+                android:endY="130"
+                android:startX="85"
+                android:startY="100"
+                android:type="linear">
+                <item android:color="#A099CC33" android:offset="0" />
+                <item android:color="#3099CC33" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Lens Detail Lines -->
+    <path
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.7"
+        android:strokeColor="#AA99CC33"
+        android:pathData="M85,108 L115,122 M85,122 L115,108 M100,98 L100,132" />
+
+    <!-- Flash Light - Phóng to đèn flash -->
+    <path
+        android:fillColor="#EFFFFFFF"
+        android:pathData="M152,85m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+
+</vector>

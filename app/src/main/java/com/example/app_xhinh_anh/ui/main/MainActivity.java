@@ -21,12 +21,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.app_xhinh_anh.R;
 import com.example.app_xhinh_anh.databinding.ActivityMainBinding;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
-    private ImageActionManager imageActionManager;
     private Dialog loadingDialog;
     private boolean isWaitingForEditor = false;
 
@@ -43,32 +41,55 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        imageActionManager = new ImageActionManager(this);
+        ImageActionManager imageActionManager = new ImageActionManager(this);
         imageActionManager.setUpButtons(binding.getRoot());
 
         setupTitleAnimation();
+        setupEntranceAnimations();
+    }
+
+    private void setupEntranceAnimations() {
+        // Hiệu ứng Logo đập nhẹ (nhịp thở)
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(binding.imgLogo, "scaleX", 1f, 1.05f, 1f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(binding.imgLogo, "scaleY", 1f, 1.05f, 1f);
+        scaleX.setDuration(3000);
+        scaleY.setDuration(3000);
+        scaleX.setRepeatCount(ValueAnimator.INFINITE);
+        scaleY.setRepeatCount(ValueAnimator.INFINITE);
+        scaleX.setInterpolator(new AccelerateDecelerateInterpolator());
+        scaleY.setInterpolator(new AccelerateDecelerateInterpolator());
+        scaleX.start();
+        scaleY.start();
+
+        // Hiệu ứng các nút trượt lên
+        binding.buttonContainer.setAlpha(0f);
+        binding.buttonContainer.setTranslationY(100f);
+        binding.buttonContainer.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(800)
+                .setStartDelay(300)
+                .setInterpolator(new AccelerateDecelerateInterpolator())
+                .start();
     }
 
     private void setupTitleAnimation() {
-        TextView tvTitle = binding.tvTitle;
-        if (tvTitle == null) return;
+        TextView tvTitle = binding.tvAppName;
 
         tvTitle.post(() -> {
             float width = tvTitle.getPaint().measureText(tvTitle.getText().toString());
             int[] colors = {
-                    Color.parseColor("#FF6B6B"), // đỏ hồng
-                    Color.parseColor("#FFD93D"), // vàng
-                    Color.parseColor("#6BCB77"), // xanh lá
-                    Color.parseColor("#4D96FF"), // xanh dương
-                    Color.parseColor("#A66CFF")  // tím
+                    Color.parseColor("#FFFFFF"),
+                    Color.parseColor("#99CC33"),
+                    Color.parseColor("#FFFFFF")
             };
             LinearGradient gradient = new LinearGradient(
-                    0, 0, width, tvTitle.getTextSize(),
-                    colors, null, Shader.TileMode.MIRROR);
+                    0, 0, width, 0,
+                    colors, new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP);
             tvTitle.getPaint().setShader(gradient);
 
-            ValueAnimator shimmer = ValueAnimator.ofFloat(0f, width * 2);
-            shimmer.setDuration(2500);
+            ValueAnimator shimmer = ValueAnimator.ofFloat(-width, width);
+            shimmer.setDuration(3000);
             shimmer.setRepeatCount(ValueAnimator.INFINITE);
             shimmer.setInterpolator(new AccelerateDecelerateInterpolator());
             shimmer.addUpdateListener(a -> {
@@ -79,17 +100,6 @@ public class MainActivity extends AppCompatActivity {
             });
             shimmer.start();
         });
-
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(tvTitle, "scaleX", 1f, 1.04f, 1f);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(tvTitle, "scaleY", 1f, 1.04f, 1f);
-        scaleX.setDuration(1800);
-        scaleY.setDuration(1800);
-        scaleX.setRepeatCount(ValueAnimator.INFINITE);
-        scaleY.setRepeatCount(ValueAnimator.INFINITE);
-        scaleX.setInterpolator(new AccelerateDecelerateInterpolator());
-        scaleY.setInterpolator(new AccelerateDecelerateInterpolator());
-        scaleX.start();
-        scaleY.start();
     }
 
     @Override
