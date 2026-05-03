@@ -9,6 +9,7 @@ import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,7 +23,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.app_xhinh_anh.R;
-import com.example.app_xhinh_anh.databinding.ActivityEditorBinding;
 
 import ja.burhanrashid52.photoeditor.PhotoEditor;
 import ja.burhanrashid52.photoeditor.PhotoEditorView;
@@ -30,40 +30,46 @@ import ja.burhanrashid52.photoeditor.PhotoEditorView;
 public class StickerManager {
 
     private final AppCompatActivity activity;
-    private final ActivityEditorBinding binding;
     private final PhotoEditor photoEditor;
+    private final PhotoEditorView photoEditorView;
+    private final LinearLayout stickerPanel;
+    private final LinearLayout stickerCategoryTabs;
+    private final LinearLayout stickerList;
     private TextView selectedCategoryTabView;
 
-    public StickerManager(AppCompatActivity activity, ActivityEditorBinding binding, PhotoEditor photoEditor) {
+    public StickerManager(AppCompatActivity activity, PhotoEditor photoEditor, PhotoEditorView photoEditorView) {
         this.activity = activity;
-        this.binding = binding;
         this.photoEditor = photoEditor;
-
-        binding.btnStickerDone.setOnClickListener(v -> closeStickerPanel());
+        this.photoEditorView = photoEditorView;
+        this.stickerPanel = activity.findViewById(R.id.stickerPanel);
+        this.stickerCategoryTabs = activity.findViewById(R.id.stickerCategoryTabs);
+        this.stickerList = activity.findViewById(R.id.stickerList);
+        Button btnStickerDone = activity.findViewById(R.id.btnStickerDone);
+        btnStickerDone.setOnClickListener(v -> closeStickerPanel());
     }
 
     public void openStickerPanel() {
         populateCategoryTabs();
-        selectCategory(CATEGORIES[0], (TextView) binding.stickerCategoryTabs.getChildAt(0));
-        binding.stickerPanel.setVisibility(View.VISIBLE);
+        selectCategory(CATEGORIES[0], (TextView) stickerCategoryTabs.getChildAt(0));
+        stickerPanel.setVisibility(View.VISIBLE);
     }
 
     public void closeStickerPanel() {
-        binding.stickerPanel.setVisibility(View.GONE);
+        stickerPanel.setVisibility(View.GONE);
     }
 
     public boolean isPanelVisible() {
-        return binding.stickerPanel.getVisibility() == View.VISIBLE;
+        return stickerPanel.getVisibility() == View.VISIBLE;
     }
 
     private void populateCategoryTabs() {
-        binding.stickerCategoryTabs.removeAllViews();
+        stickerCategoryTabs.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(activity);
         for (StickerCategory category : CATEGORIES) {
-            TextView tab = (TextView) inflater.inflate(R.layout.item_filter_category_tab, binding.stickerCategoryTabs, false);
+            TextView tab = (TextView) inflater.inflate(R.layout.item_filter_category_tab, stickerCategoryTabs, false);
             tab.setText(category.name);
             tab.setOnClickListener(v -> selectCategory(category, tab));
-            binding.stickerCategoryTabs.addView(tab);
+            stickerCategoryTabs.addView(tab);
         }
     }
 
@@ -77,30 +83,28 @@ public class StickerManager {
     }
 
     private void populateStickers(StickerCategory category) {
-        binding.stickerList.removeAllViews();
+        stickerList.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(activity);
-        
+
         int targetWidth = calculateTargetWidth();
 
         for (int stickerResId : category.stickerResIds) {
-            View item = inflater.inflate(R.layout.item_filter_thumb, binding.stickerList, false);
+            View item = inflater.inflate(R.layout.item_filter_thumb, stickerList, false);
             ImageView thumb = item.findViewById(R.id.filterThumb);
             TextView name = item.findViewById(R.id.filterName);
             name.setVisibility(View.GONE);
 
-            // Hiển thị thumbnail
             if (category.name.equals("Animal")) {
                 loadAndTintSticker(stickerResId, thumb, true);
             } else {
-                // Sử dụng Glide để load thumbnail mượt hơn và đúng scale
                 Glide.with(activity).load(stickerResId).into(thumb);
             }
-            
+
             item.setOnClickListener(v -> {
                 Glide.with(activity)
                         .asBitmap()
                         .load(stickerResId)
-                        .override(targetWidth) 
+                        .override(targetWidth)
                         .into(new CustomTarget<Bitmap>() {
                             @Override
                             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
@@ -110,21 +114,22 @@ public class StickerManager {
                                 }
                                 photoEditor.addImage(finalBitmap);
                             }
+
                             @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {}
+                            public void onLoadCleared(@Nullable Drawable placeholder) {
+                            }
                         });
             });
-            binding.stickerList.addView(item);
+            stickerList.addView(item);
         }
     }
 
     private int calculateTargetWidth() {
-        if (binding.photoEditorView.getSource().getDrawable() != null) {
-            int imageWidth = binding.photoEditorView.getSource().getDrawable().getIntrinsicWidth();
-            // Thu nhỏ sticker xuống 1/6 chiều rộng ảnh để không quá to
+        if (photoEditorView.getSource().getDrawable() != null) {
+            int imageWidth = photoEditorView.getSource().getDrawable().getIntrinsicWidth();
             return Math.max(150, imageWidth / 6);
         }
-        return 300; // Giá trị mặc định an toàn
+        return 300;
     }
 
     private void loadAndTintSticker(int resId, ImageView imageView, boolean toWhite) {
@@ -140,8 +145,10 @@ public class StickerManager {
                             imageView.setImageBitmap(resource);
                         }
                     }
+
                     @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
                 });
     }
 
@@ -155,8 +162,9 @@ public class StickerManager {
     }
 
     private static class StickerCategory {
-        String name;
-        int[] stickerResIds;
+        final String name;
+        final int[] stickerResIds;
+
         StickerCategory(String name, int[] stickerResIds) {
             this.name = name;
             this.stickerResIds = stickerResIds;

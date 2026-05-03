@@ -3,6 +3,8 @@ package com.example.app_xhinh_anh.features.ai_assistant.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -14,14 +16,20 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.app_xhinh_anh.R;
 import com.example.app_xhinh_anh.BuildConfig;
+import com.example.app_xhinh_anh.R;
 import com.example.app_xhinh_anh.features.ai_assistant.data.GeminiApiClient;
+import com.example.app_xhinh_anh.features.ai_assistant.domain.ActionMapper;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.AiResponseManager;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage;
 import com.example.app_xhinh_anh.features.ai_assistant.ui.adapter.ChatAdapter;
 
+import java.util.List;
+
 public class AiAssistantActivity extends AppCompatActivity {
+
+    /** Khoảng chờ trước khi finish() để user còn kịp đọc bubble xác nhận. */
+    private static final long FINISH_DELAY_MS = 1000L;
 
     private RecyclerView rvChatHistory;
     private ChatAdapter chatAdapter;
@@ -29,11 +37,13 @@ public class AiAssistantActivity extends AppCompatActivity {
     private ImageButton btnSendChat;
     private ProgressBar pbAiThinking;
     private GeminiApiClient geminiApiClient;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final AiResponseManager.ResponseCallback aiCallback = new AiResponseManager.ResponseCallback() {
         @Override
         public void onMessage(String text) {
             runOnUiThread(() -> {
+                if (text == null || text.isEmpty()) return;
                 chatAdapter.addMessage(new ChatMessage(text, false));
                 rvChatHistory.scrollToPosition(chatAdapter.getItemCount() - 1);
             });
@@ -41,29 +51,51 @@ public class AiAssistantActivity extends AppCompatActivity {
 
         @Override
         public void onApplyFilter(String filterName) {
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("action", "APPLY_FILTER");
-            resultIntent.putExtra("filter_name", filterName);
-            setResult(RESULT_OK, resultIntent);
-            
-            // TỰ ĐỘNG THOÁT: Giảm xuống còn 1 giây để phản ứng nhanh hơn
-            new android.os.Handler().postDelayed(() -> finish(), 1000);
+            Intent r = new Intent();
+            r.putExtra("action", "APPLY_FILTER");
+            r.putExtra("filter_name", filterName);
+            setResult(RESULT_OK, r);
+            scheduleFinish();
         }
 
         @Override
-        public void onAdjust(String property, int value) {
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("action", "ADJUST");
-            resultIntent.putExtra("property", property);
-            resultIntent.putExtra("value", value);
-            setResult(RESULT_OK, resultIntent);
+        public void onAdjustments(List<ActionMapper.Adjustment> adjustments) {
+            if (adjustments == null || adjustments.isEmpty()) return;
+            String[] props = new String[adjustments.size()];
+            int[] values = new int[adjustments.size()];
+            for (int i = 0; i < adjustments.size(); i++) {
+                props[i] = adjustments.get(i).property;
+                values[i] = adjustments.get(i).value;
+            }
+            Intent r = new Intent();
+            r.putExtra("action", "ADJUST");
+            r.putExtra("adjust_props", props);
+            r.putExtra("adjust_values", values);
+            setResult(RESULT_OK, r);
+            scheduleFinish();
+        }
 
-            new android.os.Handler().postDelayed(() -> finish(), 1000);
+        @Override
+        public void onOpenTool(String toolName) {
+            Intent r = new Intent();
+            r.putExtra("action", "OPEN_TOOL");
+            r.putExtra("tool_name", toolName);
+            setResult(RESULT_OK, r);
+            scheduleFinish();
+        }
+
+        @Override
+        public void onRemoveBackground() {
+            Intent r = new Intent();
+            r.putExtra("action", "REMOVE_BACKGROUND");
+            setResult(RESULT_OK, r);
+            scheduleFinish();
         }
 
         @Override
         public void onError(String error) {
-            onMessage("❌ Lỗi: " + error);
+            onMessage("❌ Lỗi: " + (error != null ? error : "Không xác định"));
+            runOnUiThread(() -> setSending(false));
         }
     };
 
@@ -74,6 +106,13 @@ public class AiAssistantActivity extends AppCompatActivity {
         setupToolbar();
         initViews();
         setupChat();
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Tránh leak: hủy callback finish nếu activity bị huỷ trước khi delay chạy.
+        mainHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
     }
 
     private void setupToolbar() {
@@ -94,9 +133,19 @@ public class AiAssistantActivity extends AppCompatActivity {
         chatAdapter = new ChatAdapter();
         rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         rvChatHistory.setAdapter(chatAdapter);
-        geminiApiClient = new GeminiApiClient(BuildConfig.GEMINI_API_KEY);
 
-        if (chatAdapter.getItemCount() == 0) {
+        String apiKey = BuildConfig.GEMINI_API_KEY;
+        if (apiKey != null && !apiKey.isEmpty()) {
+            geminiApiClient = new GeminiApiClient(apiKey);
+        } else {
+            chatAdapter.addMessage(new ChatMessage(
+                    "⚠️ Chưa cấu hình GEMINI_API_KEY trong local.properties.\n"
+                            + "Chỉ các từ khóa local hoạt động (vd: \"tăng sáng\", \"hoài cổ\", \"xóa nền\").",
+                    false));
+        }
+
+        if (chatAdapter.getItemCount() == 0
+                || (chatAdapter.getItemCount() == 1 && apiKey != null && !apiKey.isEmpty())) {
             chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Tôi là Trợ lý AI của App Xhinh Anh. Tôi có thể giúp bạn chỉnh sửa ảnh nhanh chóng bằng giọng nói hoặc văn bản.\n\n" +
                     "💡 **Bạn có thể thử các câu lệnh sau:**\n\n" +
                     "🎨 **Áp dụng bộ lọc nhanh:**\n" +
@@ -116,6 +165,7 @@ public class AiAssistantActivity extends AppCompatActivity {
         }
 
         btnSendChat.setOnClickListener(v -> {
+            if (!btnSendChat.isEnabled()) return;
             String message = etChatInput.getText().toString().trim();
             if (!message.isEmpty()) {
                 hideKeyboard();
@@ -135,19 +185,24 @@ public class AiAssistantActivity extends AppCompatActivity {
     private void processMessage(String message) {
         chatAdapter.addMessage(new ChatMessage(message, true));
         etChatInput.setText("");
-        // Dùng scrollToPosition thay vì smoothScroll để cảm giác "tức thì" hơn
         rvChatHistory.scrollToPosition(chatAdapter.getItemCount() - 1);
 
+        // Bắt từ khóa local trước — phản hồi tức thì, không cần API.
         if (AiResponseManager.handleLocalInput(message, aiCallback)) {
             return;
         }
 
-        pbAiThinking.setVisibility(View.VISIBLE);
+        if (geminiApiClient == null) {
+            aiCallback.onMessage("⚠️ Câu lệnh này cần API key. Hãy cấu hình GEMINI_API_KEY hoặc thử các từ khóa local (vd: \"tăng sáng\", \"hoài cổ\", \"xóa nền\").");
+            return;
+        }
+
+        setSending(true);
         geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
             @Override
             public void onSuccess(String response) {
                 runOnUiThread(() -> {
-                    pbAiThinking.setVisibility(View.GONE);
+                    setSending(false);
                     AiResponseManager.parseResponse(response, aiCallback);
                 });
             }
@@ -155,10 +210,22 @@ public class AiAssistantActivity extends AppCompatActivity {
             @Override
             public void onError(Throwable t) {
                 runOnUiThread(() -> {
-                    pbAiThinking.setVisibility(View.GONE);
-                    aiCallback.onError(t.getMessage());
+                    setSending(false);
+                    aiCallback.onError(t != null ? t.getMessage() : null);
                 });
             }
         });
+    }
+
+    /** Khoá UI gửi tin trong khi chờ AI để tránh spam / race condition. */
+    private void setSending(boolean sending) {
+        pbAiThinking.setVisibility(sending ? View.VISIBLE : View.GONE);
+        btnSendChat.setEnabled(!sending);
+        btnSendChat.setAlpha(sending ? 0.5f : 1f);
+        etChatInput.setEnabled(!sending);
+    }
+
+    private void scheduleFinish() {
+        mainHandler.postDelayed(this::finish, FINISH_DELAY_MS);
     }
 }

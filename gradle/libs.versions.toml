@@ -10,8 +10,10 @@ constraintlayout = "2.2.1"
 glide = "4.16.0"
 ucrop = "2.2.11"
 photoeditor = "3.0.1"
-mlkit-subject-segmentation = "16.0.0-beta1"
+mlkitSubjectSegmentation = "16.0.0-beta1"
 generativeai = "0.9.0"
+playServicesBase = "18.5.0"
+okhttp = "4.12.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -24,8 +26,10 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 ucrop = { group = "com.github.yalantis", name = "ucrop", version.ref = "ucrop" }
 photoeditor = { group = "com.burhanrashid52", name = "photoeditor", version.ref = "photoeditor" }
-mlkit-subject-segmentation = { group = "com.google.android.gms", name = "play-services-mlkit-subject-segmentation", version.ref = "mlkit-subject-segmentation" }
+mlkit-segmentation-subject = { group = "com.google.android.gms", name = "play-services-mlkit-subject-segmentation", version.ref = "mlkitSubjectSegmentation" }
 generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
+play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "playServicesBase" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
