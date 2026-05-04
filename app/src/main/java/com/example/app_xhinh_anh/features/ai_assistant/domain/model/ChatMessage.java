@@ -6,6 +6,8 @@ public class ChatMessage {
     private String message;
     private boolean isUser;
     private Bitmap image;
+    /** Tap handler khi user nhấn vào ảnh trong bubble (vd: mở ảnh AI tạo trong editor). */
+    private Runnable onImageClick;
 
     public ChatMessage(String message, boolean isUser) {
         this.message = message;
@@ -18,6 +20,13 @@ public class ChatMessage {
         this.image = image;
     }
 
+    public ChatMessage(String message, boolean isUser, Bitmap image, Runnable onImageClick) {
+        this.message = message;
+        this.isUser = isUser;
+        this.image = image;
+        this.onImageClick = onImageClick;
+    }
+
     public String getMessage() {
         return message;
     }
@@ -28,5 +37,9 @@ public class ChatMessage {
 
     public Bitmap getImage() {
         return image;
+    }
+
+    public Runnable getOnImageClick() {
+        return onImageClick;
     }
 }

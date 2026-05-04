@@ -52,8 +52,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         if (message.getImage() != null) {
             holder.ivMessageImage.setVisibility(View.VISIBLE);
             holder.ivMessageImage.setImageBitmap(message.getImage());
+            Runnable click = message.getOnImageClick();
+            if (click != null) {
+                holder.ivMessageImage.setClickable(true);
+                holder.ivMessageImage.setOnClickListener(v -> click.run());
+            } else {
+                holder.ivMessageImage.setOnClickListener(null);
+                holder.ivMessageImage.setClickable(false);
+            }
         } else {
             holder.ivMessageImage.setVisibility(View.GONE);
+            holder.ivMessageImage.setOnClickListener(null);
         }
     }
 

@@ -2,6 +2,7 @@ package com.example.app_xhinh_anh.features.ai_assistant.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,11 +20,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.app_xhinh_anh.BuildConfig;
 import com.example.app_xhinh_anh.R;
 import com.example.app_xhinh_anh.features.ai_assistant.data.GeminiApiClient;
+import com.example.app_xhinh_anh.features.ai_assistant.data.GeminiImageClient;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.ActionMapper;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.AiResponseManager;
 import com.example.app_xhinh_anh.features.ai_assistant.domain.model.ChatMessage;
 import com.example.app_xhinh_anh.features.ai_assistant.ui.adapter.ChatAdapter;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 
 public class AiAssistantActivity extends AppCompatActivity {
@@ -37,6 +41,7 @@ public class AiAssistantActivity extends AppCompatActivity {
     private ImageButton btnSendChat;
     private ProgressBar pbAiThinking;
     private GeminiApiClient geminiApiClient;
+    private GeminiImageClient geminiImageClient;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private final AiResponseManager.ResponseCallback aiCallback = new AiResponseManager.ResponseCallback() {
@@ -93,6 +98,37 @@ public class AiAssistantActivity extends AppCompatActivity {
         }
 
         @Override
+        public void onGenerateImage(String prompt) {
+            if (geminiImageClient == null) {
+                onMessage("⚠️ Tính năng tạo ảnh cần GEMINI_API_KEY.");
+                return;
+            }
+            runOnUiThread(() -> setSending(true));
+            geminiImageClient.generate(prompt, new GeminiImageClient.ImageCallback() {
+                @Override
+                public void onSuccess(Bitmap bitmap) {
+                    runOnUiThread(() -> {
+                        setSending(false);
+                        Runnable openInEditor = () -> handoffGeneratedImage(bitmap);
+                        chatAdapter.addMessage(new ChatMessage(
+                                "✅ Đã tạo ảnh. Nhấn vào ảnh để mở trong editor và chỉnh sửa tiếp.",
+                                false, bitmap, openInEditor));
+                        rvChatHistory.scrollToPosition(chatAdapter.getItemCount() - 1);
+                    });
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    runOnUiThread(() -> {
+                        setSending(false);
+                        onMessage("❌ Không tạo được ảnh: "
+                                + (t != null ? t.getMessage() : "lỗi không xác định"));
+                    });
+                }
+            });
+        }
+
+        @Override
         public void onError(String error) {
             onMessage("❌ Lỗi: " + (error != null ? error : "Không xác định"));
             runOnUiThread(() -> setSending(false));
@@ -137,6 +173,7 @@ public class AiAssistantActivity extends AppCompatActivity {
         String apiKey = BuildConfig.GEMINI_API_KEY;
         if (apiKey != null && !apiKey.isEmpty()) {
             geminiApiClient = new GeminiApiClient(apiKey);
+            geminiImageClient = new GeminiImageClient(apiKey);
         } else {
             chatAdapter.addMessage(new ChatMessage(
                     "⚠️ Chưa cấu hình GEMINI_API_KEY trong local.properties.\n"
@@ -146,22 +183,17 @@ public class AiAssistantActivity extends AppCompatActivity {
 
         if (chatAdapter.getItemCount() == 0
                 || (chatAdapter.getItemCount() == 1 && apiKey != null && !apiKey.isEmpty())) {
-            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Tôi là Trợ lý AI của App Xhinh Anh. Tôi có thể giúp bạn chỉnh sửa ảnh nhanh chóng bằng giọng nói hoặc văn bản.\n\n" +
-                    "💡 **Bạn có thể thử các câu lệnh sau:**\n\n" +
-                    "🎨 **Áp dụng bộ lọc nhanh:**\n" +
-                    "• \"Làm trắng da cho ảnh này\"\n" +
-                    "• \"Chỉnh ảnh theo phong cách hoài cổ Polaroid\"\n" +
-                    "• \"Dùng bộ lọc Neon Fire cho rực rỡ\"\n\n" +
-                    "⚙️ **Điều chỉnh thông số (từ -100 đến 100):**\n" +
-                    "• \"Tăng độ sáng ảnh lên 30%\"\n" +
-                    "• \"Giảm độ bão hòa màu một chút\"\n" +
-                    "• \"Làm ảnh sắc nét hơn (sharpness)\"\n\n" +
-                    "✂️ **Công cụ thông minh:**\n" +
-                    "• \"Hãy xóa nền cho bức ảnh này giúp tôi\"\n" +
-                    "• \"Mở công cụ Curves để tôi tự chỉnh màu\"\n" +
-                    "• \"Tôi muốn dùng bảng màu HSL\"\n\n" +
-                    "💬 **Tư vấn:** \"Ảnh này hơi tối và mờ, tôi nên làm gì?\"\n\n" +
-                    "Bạn muốn thay đổi điều gì cho bức ảnh này?", false));
+            chatAdapter.addMessage(new ChatMessage("👋 Chào bạn! Tôi là Trợ lý AI của App Xhinh Anh.\n\n" +
+                    "💡 **Bạn có thể thử:**\n\n" +
+                    "🎨 **Bộ lọc & chỉnh ảnh:**\n" +
+                    "• \"Làm trắng da\"  • \"Phong cách Polaroid\"\n" +
+                    "• \"Tăng sáng 30%\"  • \"Làm rõ chi tiết, sắc nét\"\n\n" +
+                    "✂️ **Công cụ:** \"Xóa nền\"  • \"Mở Curves\"  • \"Cắt ảnh\"\n\n" +
+                    "🪄 **Tạo ảnh AI mới (như Midjourney/DALL-E):**\n" +
+                    "• \"Tạo ảnh con mèo phi hành gia trong vũ trụ\"\n" +
+                    "• \"Vẽ cảnh hoàng hôn trên biển, phong cách anime\"\n" +
+                    "Sau khi AI tạo xong, nhấn vào ảnh để mở trong editor.\n\n" +
+                    "Bạn muốn làm gì?", false));
         }
 
         btnSendChat.setOnClickListener(v -> {
@@ -187,16 +219,20 @@ public class AiAssistantActivity extends AppCompatActivity {
         etChatInput.setText("");
         rvChatHistory.scrollToPosition(chatAdapter.getItemCount() - 1);
 
-        // Bắt từ khóa local trước — phản hồi tức thì, không cần API.
+        // Có Gemini → đi thẳng vào API. Local matcher chỉ là fallback offline để
+        // tránh false-positive (vd "chi tiết" khớp nhầm "hi " greeting).
+        if (geminiApiClient != null) {
+            sendToGemini(message);
+            return;
+        }
+
         if (AiResponseManager.handleLocalInput(message, aiCallback)) {
             return;
         }
+        aiCallback.onMessage("⚠️ Câu lệnh này cần API key. Hãy cấu hình GEMINI_API_KEY hoặc thử các từ khóa local (vd: \"tăng sáng\", \"hoài cổ\", \"xóa nền\").");
+    }
 
-        if (geminiApiClient == null) {
-            aiCallback.onMessage("⚠️ Câu lệnh này cần API key. Hãy cấu hình GEMINI_API_KEY hoặc thử các từ khóa local (vd: \"tăng sáng\", \"hoài cổ\", \"xóa nền\").");
-            return;
-        }
-
+    private void sendToGemini(String message) {
         setSending(true);
         geminiApiClient.sendMessage(message, new GeminiApiClient.AiCallback() {
             @Override
@@ -215,6 +251,27 @@ public class AiAssistantActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    /**
+     * Lưu bitmap AI sinh ra vào cache rồi gửi path về EditorActivity. Dùng đường dẫn
+     * file thay vì FileProvider URI vì cùng process — tránh boilerplate authority.
+     */
+    private void handoffGeneratedImage(Bitmap bitmap) {
+        if (bitmap == null) return;
+        try {
+            File f = new File(getCacheDir(), "ai_gen_" + System.currentTimeMillis() + ".png");
+            try (FileOutputStream out = new FileOutputStream(f)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            }
+            Intent r = new Intent();
+            r.putExtra("action", "GENERATE_IMAGE");
+            r.putExtra("image_path", f.getAbsolutePath());
+            setResult(RESULT_OK, r);
+            finish();
+        } catch (Exception e) {
+            aiCallback.onMessage("❌ Không lưu được ảnh: " + e.getMessage());
+        }
     }
 
     /** Khoá UI gửi tin trong khi chờ AI để tránh spam / race condition. */

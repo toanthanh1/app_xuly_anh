@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Điều phối phản hồi của trợ lý AI:
@@ -25,72 +26,103 @@ public class AiResponseManager {
         void onAdjustments(List<ActionMapper.Adjustment> adjustments);
         void onOpenTool(String toolName);
         void onRemoveBackground();
+        /** Sinh ảnh mới từ prompt (gọi Imagen-style model, hiển thị bubble ảnh). */
+        void onGenerateImage(String prompt);
         void onError(String error);
     }
 
     /**
-     * Bắt nhanh các yêu cầu thường gặp bằng từ khóa, tránh gọi API. Trả về true nếu
-     * đã match — caller dừng pipeline. Tất cả các nhánh đều trả lời người dùng (onMessage)
-     * trước khi gọi action để chat hiển thị mượt.
+     * Bắt nhanh các yêu cầu thường gặp khi KHÔNG có Gemini (offline). Có Gemini thì
+     * Activity bỏ qua bước này — Gemini hiểu ngữ cảnh chính xác hơn nhiều và tránh
+     * false-positive kiểu "chi tiết" → "hi " (greeting).
+     *
+     * Tất cả lookup đều dùng word-boundary regex để tránh khớp giữa từ.
      */
     public static boolean handleLocalInput(String input, ResponseCallback callback) {
         if (input == null || input.isEmpty()) return false;
         String s = input.toLowerCase().trim();
 
-        if (s.contains("chào") || s.contains("hi ") || s.equals("hi")
-                || s.contains("hello") || s.contains("helo")) {
+        // Greeting — chỉ khớp khi "hi"/"hello" đứng riêng, không phải substring
+        if (matches(s, "chào", "hello", "helo") || s.equals("hi") || s.startsWith("hi ")) {
             callback.onMessage("Xin chào! Tôi có thể giúp bạn:\n"
-                    + "✨ Làm trắng da\n📜 Áp dụng bộ lọc Hoài cổ\n☀️ Chỉnh ảnh tươi sáng hơn");
+                    + "✨ Làm trắng da\n📜 Áp dụng bộ lọc Hoài cổ\n☀️ Chỉnh ảnh tươi sáng hơn\n"
+                    + "🔍 Làm rõ chi tiết / sắc nét\n🎨 Tạo ảnh mới (vd: \"tạo ảnh con mèo phi hành gia\")");
             return true;
         }
 
-        if (s.contains("trắng") || s.contains("sáng da")) {
+        if (matches(s, "trắng da", "sáng da", "làm trắng")) {
             callback.onMessage("✨ Đang kích hoạt chế độ làm đẹp da (Snow White)...");
             callback.onApplyFilter("Snow White");
             return true;
         }
 
-        if (s.contains("hoài cổ") || s.contains("retro") || s.contains("cũ") || s.contains("sepia")) {
+        if (matches(s, "hoài cổ", "retro", "sepia")) {
             callback.onMessage("📜 Đang áp dụng phong cách hoài cổ (Sepia)...");
             callback.onApplyFilter("Sepia");
             return true;
         }
 
-        if (s.contains("tươi sáng") || s.contains("sáng hơn") || s.contains("vivid")) {
+        if (matches(s, "tươi sáng", "sáng hơn", "vivid", "rực rỡ")) {
             callback.onMessage("☀️ Đang làm bức ảnh tươi sáng hơn...");
             callback.onApplyFilter("Vivid");
             return true;
         }
 
-        if (s.contains("xóa phông") || s.contains("xóa nền") || s.contains("xoá phông") || s.contains("xoá nền")) {
+        if (matches(s, "xóa phông", "xóa nền", "xoá phông", "xoá nền", "remove background")) {
             callback.onMessage("🧹 Đang xóa phông nền...");
             callback.onRemoveBackground();
             return true;
         }
 
-        if (s.contains("tăng sáng") || s.contains("thêm sáng") || s.contains("sáng thêm")) {
+        if (matches(s, "tăng sáng", "thêm sáng", "sáng thêm")) {
             callback.onMessage("☀️ Đã tăng độ sáng thêm 20%");
             callback.onAdjustments(Collections.singletonList(new ActionMapper.Adjustment("brightness", 20)));
             return true;
         }
-        if (s.contains("giảm sáng") || s.contains("tối đi")) {
+        if (matches(s, "giảm sáng", "tối đi", "tối hơn")) {
             callback.onMessage("🌙 Đã giảm độ sáng đi 20%");
             callback.onAdjustments(Collections.singletonList(new ActionMapper.Adjustment("brightness", -20)));
             return true;
         }
 
-        if (s.contains("tăng tương phản") || s.contains("đậm hơn")) {
+        if (matches(s, "tăng tương phản", "đậm hơn")) {
             callback.onMessage("🎨 Đã tăng độ tương phản");
             callback.onAdjustments(Collections.singletonList(new ActionMapper.Adjustment("contrast", 20)));
             return true;
         }
-        if (s.contains("giảm tương phản") || s.contains("nhạt hơn")) {
+        if (matches(s, "giảm tương phản", "nhạt hơn")) {
             callback.onMessage("🌫️ Đã giảm độ tương phản");
             callback.onAdjustments(Collections.singletonList(new ActionMapper.Adjustment("contrast", -20)));
             return true;
         }
 
+        if (matches(s, "làm rõ", "rõ nét", "chi tiết", "sắc nét", "sharpen", "clarity")) {
+            callback.onMessage("🔍 Đã làm rõ chi tiết (clarity +30, sharpness +20)");
+            List<ActionMapper.Adjustment> a = new ArrayList<>();
+            a.add(new ActionMapper.Adjustment("clarity", 30));
+            a.add(new ActionMapper.Adjustment("sharpness", 20));
+            callback.onAdjustments(a);
+            return true;
+        }
+
         return false;
+    }
+
+    /** Khớp khi {@code phrase} xuất hiện như cụm từ độc lập trong {@code s}. */
+    private static boolean matches(String s, String... phrases) {
+        for (String p : phrases) {
+            if (containsPhrase(s, p)) return true;
+        }
+        return false;
+    }
+
+    private static boolean containsPhrase(String s, String phrase) {
+        // Cụm có dấu cách: contains() là đủ vì rất khó false-positive (vd "tăng sáng").
+        if (phrase.contains(" ")) return s.contains(phrase);
+        // Từ đơn: dùng word-boundary để tránh khớp giữa từ.
+        // Pattern \b không hoạt động tốt với tiếng Việt có dấu, nên dùng (?<=^|\W)...(?=\W|$).
+        return Pattern.compile("(?:^|\\W)" + Pattern.quote(phrase) + "(?:\\W|$)",
+                Pattern.UNICODE_CASE).matcher(s).find();
     }
 
     /**
@@ -170,6 +202,16 @@ public class AiResponseManager {
                 case "REMOVE_BACKGROUND": {
                     callback.onMessage("🧹 Đang xóa phông nền...");
                     callback.onRemoveBackground();
+                    break;
+                }
+                case "GENERATE_IMAGE": {
+                    String prompt = json.optString("prompt", "").trim();
+                    if (prompt.isEmpty()) {
+                        callback.onMessage("⚠️ AI không nêu rõ nội dung ảnh muốn tạo.");
+                    } else {
+                        callback.onMessage("🎨 Đang tạo ảnh: \"" + prompt + "\"...");
+                        callback.onGenerateImage(prompt);
+                    }
                     break;
                 }
                 case "MESSAGE": {

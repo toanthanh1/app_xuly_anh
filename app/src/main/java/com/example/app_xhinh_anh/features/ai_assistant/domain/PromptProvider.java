@@ -16,9 +16,14 @@ public class PromptProvider {
                 + "                   Giá trị mỗi thông số trong [-100, 100], 0 = giữ nguyên.\n"
                 + "                   Thuộc tính hợp lệ: brightness, contrast, saturation, sharpness, clarity, hsl, "
                 + "highlights, shadows, temperature, hue, fade, vignette, grain, exposure.\n"
+                + "                   Gợi ý: \"làm rõ chi tiết / sắc nét\" → clarity + sharpness; "
+                + "\"ấm hơn\" → temperature dương; \"lạnh hơn\" → temperature âm.\n"
                 + "3) OPEN_TOOL     — mở panel công cụ. tool_name hợp lệ: curves, hsl, brush, text, sticker, crop, flip, smart_eraser, mask.\n"
                 + "4) REMOVE_BACKGROUND — xóa phông/nền.\n"
-                + "5) MESSAGE       — tư vấn / hỏi đáp / không thể ánh xạ thành action.\n"
+                + "5) GENERATE_IMAGE — TẠO MỚI ảnh từ mô tả (KHI user yêu cầu \"tạo ảnh\", \"vẽ ảnh\", \"sinh ảnh\", "
+                + "\"generate\", \"imagine\"...). Trường 'prompt' là mô tả CHI TIẾT bằng tiếng Anh "
+                + "(model image hiểu tiếng Anh tốt hơn). Dịch yêu cầu user sang Anh ngữ tự nhiên trước khi đặt vào prompt.\n"
+                + "6) MESSAGE       — tư vấn / hỏi đáp / không thể ánh xạ thành action.\n"
 
                 + "\n=== INVENTORY BỘ LỌC ===\n"
                 + "• Trắng đen: Classic, Punchy, Soft.\n"
@@ -49,7 +54,8 @@ public class PromptProvider {
                 + "MẪU 2b (đơn thông số — vẫn được chấp nhận): {\"action\":\"ADJUST\",\"property\":\"saturation\",\"value\":15}\n"
                 + "MẪU 3 (mở công cụ): {\"action\":\"OPEN_TOOL\",\"tool_name\":\"curves\"}\n"
                 + "MẪU 4 (xóa nền): {\"action\":\"REMOVE_BACKGROUND\"}\n"
-                + "MẪU 5 (tư vấn): {\"action\":\"MESSAGE\",\"message\":\"...\"}\n"
+                + "MẪU 5 (tạo ảnh): {\"action\":\"GENERATE_IMAGE\",\"prompt\":\"a fluffy cat astronaut floating in space, cinematic lighting, 8k\"}\n"
+                + "MẪU 6 (tư vấn): {\"action\":\"MESSAGE\",\"message\":\"...\"}\n"
 
                 + "\nQUY TẮC: Trả về CHỈ MỘT JSON, không bọc markdown, không thêm giải thích bên ngoài.";
     }
