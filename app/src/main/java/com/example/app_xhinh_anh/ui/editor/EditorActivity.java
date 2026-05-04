@@ -65,6 +65,8 @@ import ja.burhanrashid52.photoeditor.PhotoEditorView;
 import ja.burhanrashid52.photoeditor.SaveSettings;
 import ja.burhanrashid52.photoeditor.TextStyleBuilder;
 import ja.burhanrashid52.photoeditor.ViewType;
+import ja.burhanrashid52.photoeditor.shape.ShapeBuilder;
+import ja.burhanrashid52.photoeditor.shape.ShapeType;
 
 public class EditorActivity extends AppCompatActivity {
 
@@ -72,12 +74,18 @@ public class EditorActivity extends AppCompatActivity {
     private static final int AI_REQUEST_CODE = 1001;
 
     private PhotoEditorView photoEditorView;
+    private ZoomableFrameLayout zoomContainer;
     private PhotoEditor photoEditor;
     private StickerManager stickerManager;
     private Uri currentImageUri;
     private ImageButton btnUndo, btnRedo;
+    /** Giới hạn để tránh OOM — mỗi snapshot có thể vài MB. */
+    private static final int MAX_UNDO = 30;
     private final Stack<Bitmap> undoBitmapStack = new Stack<>();
     private final Stack<Bitmap> redoBitmapStack = new Stack<>();
+    /** Lưu kèm URI tại từng snapshot — để Crop sau Undo dùng đúng URI. */
+    private final Stack<Uri> undoUriStack = new Stack<>();
+    private final Stack<Uri> redoUriStack = new Stack<>();
     // Ghi nhớ thứ tự xen kẽ giữa thao tác bitmap (flip/crop/adjust/filter) và view (text/brush)
     private enum OpType { BITMAP, VIEW }
     private final Stack<OpType> undoOpStack = new Stack<>();
@@ -162,6 +170,8 @@ public class EditorActivity extends AppCompatActivity {
     private int currentBrushSize = 20;
     private int currentBrushOpacity = 100;
     private View selectedBrushColorView;
+    private final ShapeBuilder brushShapeBuilder = new ShapeBuilder()
+            .withShapeType(ShapeType.Brush.INSTANCE);
     private static final int[] BRUSH_COLORS = new int[]{
             // Đen và trắng
             0xFF000000, 0xFFFFFFFF,
@@ -292,6 +302,7 @@ public class EditorActivity extends AppCompatActivity {
                 .setNavigationOnClickListener(v -> finish());
         // 1. Ánh xạ View
         photoEditorView = findViewById(R.id.photoEditorView);
+        zoomContainer = findViewById(R.id.zoomContainer);
         btnUndo = findViewById(R.id.btnUndo);
         btnRedo = findViewById(R.id.btnRedo);
 
@@ -300,6 +311,7 @@ public class EditorActivity extends AppCompatActivity {
                 .setPinchTextScalable(true)
                 .build();
         setupPhotoEditorListener();
+        setupBrushStrokeTracker();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -690,6 +702,8 @@ public class EditorActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 photoEditorView.getSource().clearColorFilter();
                 photoEditorView.getSource().setImageBitmap(finalBitmap);
+                // Reset zoom when image changes after adjustments
+                if (zoomContainer != null) zoomContainer.resetZoom();
                 dismissLoadingDialog();
             });
         }).start();
@@ -792,7 +806,7 @@ public class EditorActivity extends AppCompatActivity {
                 int size = Math.max(1, progress);
                 currentBrushSize = size;
                 brushSizeValueText.setText(String.valueOf(size));
-                photoEditor.setBrushSize(size);
+                applyBrushShape();
             }
             @Override public void onStartTrackingTouch(SeekBar sb) {}
             @Override public void onStopTrackingTouch(SeekBar sb) {}
@@ -803,7 +817,7 @@ public class EditorActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 currentBrushOpacity = progress;
                 brushOpacityValueText.setText(String.valueOf(progress));
-                photoEditor.setOpacity(progress);
+                applyBrushShape();
             }
             @Override public void onStartTrackingTouch(SeekBar sb) {}
             @Override public void onStopTrackingTouch(SeekBar sb) {}
@@ -848,9 +862,7 @@ public class EditorActivity extends AppCompatActivity {
         }
 
         photoEditor.setBrushDrawingMode(true);
-        photoEditor.setBrushSize(currentBrushSize);
-        photoEditor.setBrushColor(currentBrushColor);
-        photoEditor.setOpacity(currentBrushOpacity);
+        applyBrushShape();
         // Khôi phục lại trạng thái style đã chọn (gồm cả tẩy)
         selectBrushStyle(currentBrushStyle);
 
@@ -893,18 +905,25 @@ public class EditorActivity extends AppCompatActivity {
                 break;
             case BRUSH_STYLE_HIGHLIGHTER:
                 photoEditor.setBrushDrawingMode(true);
-                photoEditor.setBrushColor(currentBrushColor);
                 currentBrushOpacity = 40;
-                photoEditor.setOpacity(40);
                 brushOpacitySeek.setProgress(40);
                 brushOpacityValueText.setText("40");
+                applyBrushShape();
                 break;
             default: // PEN
                 photoEditor.setBrushDrawingMode(true);
-                photoEditor.setBrushColor(currentBrushColor);
-                photoEditor.setOpacity(currentBrushOpacity);
+                applyBrushShape();
                 break;
         }
+    }
+
+    private void applyBrushShape() {
+        brushShapeBuilder
+                .withShapeType(ShapeType.Brush.INSTANCE)
+                .withShapeSize(currentBrushSize)
+                .withShapeColor(currentBrushColor)
+                .withShapeOpacity(currentBrushOpacity);
+        photoEditor.setShape(brushShapeBuilder);
     }
 
     private void populateBrushColors() {
@@ -953,7 +972,7 @@ public class EditorActivity extends AppCompatActivity {
         container.setBackgroundResource(R.drawable.bg_brush_color_selected);
         selectedBrushColorView = container;
         if (currentBrushStyle != BRUSH_STYLE_ERASER) {
-            photoEditor.setBrushColor(color);
+            applyBrushShape();
         }
     }
 
@@ -1044,6 +1063,8 @@ public class EditorActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 photoEditorView.getSource().clearColorFilter();
                 photoEditorView.getSource().setImageBitmap(full);
+                // Reset zoom when image changes after filter
+                if (zoomContainer != null) zoomContainer.resetZoom();
                 dismissLoadingDialog();
             });
         }).start();
@@ -1240,6 +1261,8 @@ public class EditorActivity extends AppCompatActivity {
         Bitmap flipped = Bitmap.createBitmap(original, 0, 0,
                 original.getWidth(), original.getHeight(), matrix, true);
         photoEditorView.getSource().setImageBitmap(flipped);
+        // Reset zoom when image changes after flip
+        if (zoomContainer != null) zoomContainer.resetZoom();
         Toast.makeText(this, "Đã lật ảnh", Toast.LENGTH_SHORT).show();
     }
 
@@ -1265,10 +1288,149 @@ public class EditorActivity extends AppCompatActivity {
     private void pushUndoBitmap(Bitmap bitmap) {
         if (bitmap == null) return;
         undoBitmapStack.push(copyBitmap(bitmap));
+        undoUriStack.push(currentImageUri);
         undoOpStack.push(OpType.BITMAP);
+        clearRedo();
+        capUndoStack();
+        updateUndoRedoUI();
+    }
+
+    /** Đẩy 1 op VIEW (text/sticker/emoji/brush stroke) vào op stack — không kèm bitmap. */
+    private void pushUndoView() {
+        undoOpStack.push(OpType.VIEW);
+        clearRedo();
+        capUndoStack();
+        updateUndoRedoUI();
+    }
+
+    private void clearRedo() {
+        for (Bitmap b : redoBitmapStack) {
+            if (b != null && !b.isRecycled()) b.recycle();
+        }
         redoBitmapStack.clear();
+        redoUriStack.clear();
         redoOpStack.clear();
     }
+
+    /** Cắt phần đáy stack khi vượt MAX_UNDO — recycle bitmap cũ để giải phóng RAM. */
+    private void capUndoStack() {
+        while (undoOpStack.size() > MAX_UNDO) {
+            OpType oldest = undoOpStack.remove(0);
+            if (oldest == OpType.BITMAP && !undoBitmapStack.isEmpty()) {
+                Bitmap b = undoBitmapStack.remove(0);
+                if (b != null && !b.isRecycled()) b.recycle();
+                if (!undoUriStack.isEmpty()) undoUriStack.remove(0);
+            }
+        }
+    }
+
+    private void updateUndoRedoUI() {
+        if (btnUndo == null || btnRedo == null) return;
+        boolean canUndo = !undoOpStack.isEmpty();
+        boolean canRedo = !redoOpStack.isEmpty();
+        btnUndo.setEnabled(canUndo);
+        btnUndo.setAlpha(canUndo ? 1f : 0.4f);
+        btnRedo.setEnabled(canRedo);
+        btnRedo.setAlpha(canRedo ? 1f : 0.4f);
+    }
+
+    private void performUndo() {
+        if (undoOpStack.isEmpty()) return;
+        OpType op = undoOpStack.pop();
+        if (op == OpType.BITMAP) {
+            if (undoBitmapStack.isEmpty()) {
+                updateUndoRedoUI();
+                return;
+            }
+            // Snapshot trạng thái hiện tại sang redo trước khi đè
+            if (photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
+                Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+                if (current != null) redoBitmapStack.push(copyBitmap(current));
+            }
+            redoUriStack.push(currentImageUri);
+            redoOpStack.push(OpType.BITMAP);
+
+            photoEditorView.getSource().clearColorFilter();
+            photoEditorView.getSource().setImageBitmap(undoBitmapStack.pop());
+            currentImageUri = undoUriStack.isEmpty() ? currentImageUri : undoUriStack.pop();
+            // Reset zoom when image changes after undo
+            if (zoomContainer != null) zoomContainer.resetZoom();
+        } else {
+            isPerformingUndoRedo = true;
+            try {
+                photoEditor.undo();
+            } finally {
+                isPerformingUndoRedo = false;
+            }
+            redoOpStack.push(OpType.VIEW);
+        }
+        updateUndoRedoUI();
+    }
+
+    private void performRedo() {
+        if (redoOpStack.isEmpty()) return;
+        OpType op = redoOpStack.pop();
+        if (op == OpType.BITMAP) {
+            if (redoBitmapStack.isEmpty()) {
+                updateUndoRedoUI();
+                return;
+            }
+            if (photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
+                Bitmap current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
+                if (current != null) undoBitmapStack.push(copyBitmap(current));
+            }
+            undoUriStack.push(currentImageUri);
+            undoOpStack.push(OpType.BITMAP);
+
+            photoEditorView.getSource().clearColorFilter();
+            photoEditorView.getSource().setImageBitmap(redoBitmapStack.pop());
+            currentImageUri = redoUriStack.isEmpty() ? currentImageUri : redoUriStack.pop();
+            // Reset zoom when image changes after redo
+            if (zoomContainer != null) zoomContainer.resetZoom();
+        } else {
+            isPerformingUndoRedo = true;
+            try {
+                photoEditor.redo();
+            } finally {
+                isPerformingUndoRedo = false;
+            }
+            undoOpStack.push(OpType.VIEW);
+        }
+        updateUndoRedoUI();
+    }
+    /**
+     * Hook brush stroke completion vào op stack — library không bắn onAddViewListener cho
+     * brush, nên ta tự detect ACTION_UP khi brush mode active. Touch listener observe-only
+     * (return false) để không chặn library nhận sự kiện vẽ.
+     */
+    @SuppressWarnings("ClickableViewAccessibility")
+    private void setupBrushStrokeTracker() {
+        photoEditorView.setOnTouchListener(new View.OnTouchListener() {
+            private boolean strokeInProgress = false;
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                Boolean drawing = photoEditor.getBrushDrawableMode();
+                if (drawing == null || !drawing) return false;
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        strokeInProgress = true;
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        if (strokeInProgress) {
+                            strokeInProgress = false;
+                            // Defer 1 frame để library kịp commit stroke vào internal stack trước.
+                            v.post(EditorActivity.this::pushUndoView);
+                        }
+                        break;
+                    case MotionEvent.ACTION_CANCEL:
+                        strokeInProgress = false;
+                        break;
+                }
+                return false;
+            }
+        });
+    }
+
      private void setupPhotoEditorListener() {
          photoEditor.setOnPhotoEditorListener(new OnPhotoEditorListener() {
              @Override
@@ -1284,9 +1446,7 @@ public class EditorActivity extends AppCompatActivity {
              @Override public void onAddViewListener(@Nullable ViewType viewType, int i) {
                  // Bỏ qua sự kiện do chính undo/redo của ta gây ra (photoEditor.redo() sẽ add lại view)
                  if (isPerformingUndoRedo) return;
-                 undoOpStack.push(OpType.VIEW);
-                 redoBitmapStack.clear();
-                 redoOpStack.clear();
+                 pushUndoView();
              }
              @Override public void onRemoveViewListener(@Nullable ViewType viewType, int i) {}
              @Override public void onStartViewChangeListener(@Nullable ViewType viewType) {}
@@ -1461,59 +1621,9 @@ public class EditorActivity extends AppCompatActivity {
         
         btnFlipHorizontal.setOnClickListener(v -> flipImage(-1, 1));
         btnFlipVertical.setOnClickListener(v -> flipImage(1, -1));
-        // Tác vụ Undo — route theo loại thao tác cuối cùng (BITMAP hay VIEW)
-        btnUndo.setOnClickListener(v -> {
-            if (undoOpStack.isEmpty()) return;
-            OpType op = undoOpStack.pop();
-            if (op == OpType.BITMAP) {
-                if (undoBitmapStack.isEmpty()) return;
-                Bitmap current = null;
-                if (photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
-                    current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
-                }
-                if (current != null) {
-                    redoBitmapStack.push(copyBitmap(current));
-                }
-                photoEditorView.getSource().clearColorFilter();
-                photoEditorView.getSource().setImageBitmap(undoBitmapStack.pop());
-                redoOpStack.push(OpType.BITMAP);
-            } else {
-                isPerformingUndoRedo = true;
-                try {
-                    photoEditor.undo();
-                } finally {
-                    isPerformingUndoRedo = false;
-                }
-                redoOpStack.push(OpType.VIEW);
-            }
-        });
-
-        // Tác vụ Redo — đối xứng với Undo
-        btnRedo.setOnClickListener(v -> {
-            if (redoOpStack.isEmpty()) return;
-            OpType op = redoOpStack.pop();
-            if (op == OpType.BITMAP) {
-                if (redoBitmapStack.isEmpty()) return;
-                Bitmap current = null;
-                if (photoEditorView.getSource().getDrawable() instanceof BitmapDrawable) {
-                    current = ((BitmapDrawable) photoEditorView.getSource().getDrawable()).getBitmap();
-                }
-                if (current != null) {
-                    undoBitmapStack.push(copyBitmap(current));
-                }
-                photoEditorView.getSource().clearColorFilter();
-                photoEditorView.getSource().setImageBitmap(redoBitmapStack.pop());
-                undoOpStack.push(OpType.BITMAP);
-            } else {
-                isPerformingUndoRedo = true;
-                try {
-                    photoEditor.redo();
-                } finally {
-                    isPerformingUndoRedo = false;
-                }
-                undoOpStack.push(OpType.VIEW);
-            }
-        });
+        btnUndo.setOnClickListener(v -> performUndo());
+        btnRedo.setOnClickListener(v -> performRedo());
+        updateUndoRedoUI();
         btnBrush.setOnClickListener(v -> openBrushPanel());
 
         btnAddText.setOnClickListener(v -> openTextPanel());
@@ -2020,6 +2130,8 @@ public class EditorActivity extends AppCompatActivity {
                 }
                 saveBitmapState();
                 photoEditorView.getSource().setImageBitmap(out);
+                // Reset zoom when image changes after AI erase
+                if (zoomContainer != null) zoomContainer.resetZoom();
                 closeMaskPanel();
                 Toast.makeText(this, "Đã tẩy xong", Toast.LENGTH_SHORT).show();
             });
@@ -2060,6 +2172,8 @@ public class EditorActivity extends AppCompatActivity {
                             : Bitmap.createScaledBitmap(fg, srcRef.getWidth(), srcRef.getHeight(), true);
                     saveBitmapState();
                     photoEditorView.getSource().setImageBitmap(scaled);
+                    // Reset zoom when image changes after background removal
+                    if (zoomContainer != null) zoomContainer.resetZoom();
                     closeSmartEraserPanel();
                     Toast.makeText(this, "Đã xóa phông", Toast.LENGTH_SHORT).show();
                 })
@@ -2379,6 +2493,7 @@ public class EditorActivity extends AppCompatActivity {
                 saveBitmapState();
                 currentImageUri = resultUri;
                 photoEditorView.getSource().setImageURI(currentImageUri);
+                if (zoomContainer != null) zoomContainer.resetZoom();
             }
         } else if (resultCode == RESULT_OK && requestCode == AI_REQUEST_CODE && data != null) {
             String action = data.getStringExtra("action");
@@ -2398,8 +2513,33 @@ public class EditorActivity extends AppCompatActivity {
                 applyAiOpenTool(data.getStringExtra("tool_name"));
             } else if ("REMOVE_BACKGROUND".equals(action)) {
                 applyRemoveBackground();
+            } else if ("GENERATE_IMAGE".equals(action)) {
+                applyAiGeneratedImage(data.getStringExtra("image_path"));
             }
         }
+    }
+
+    /**
+     * Nạp ảnh AI vừa sinh (file PNG trong cache) làm source của editor.
+     * Lưu state hiện tại vào undo stack để user có thể quay lại nếu cần.
+     */
+    private void applyAiGeneratedImage(String imagePath) {
+        if (imagePath == null || imagePath.isEmpty()) return;
+        File f = new File(imagePath);
+        if (!f.exists()) {
+            Toast.makeText(this, "Không tìm thấy ảnh AI tạo", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Bitmap bm = android.graphics.BitmapFactory.decodeFile(imagePath);
+        if (bm == null) {
+            Toast.makeText(this, "Không đọc được ảnh AI tạo", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        saveBitmapState();
+        currentImageUri = Uri.fromFile(f);
+        photoEditorView.getSource().setImageBitmap(bm);
+        // Reset zoom when image changes after AI generation
+        if (zoomContainer != null) zoomContainer.resetZoom();
     }
 
     /**
@@ -2484,6 +2624,8 @@ public class EditorActivity extends AppCompatActivity {
                 : copyBitmap(current);
         photoEditorView.getSource().setImageBitmap(result);
         photoEditorView.getSource().clearColorFilter();
+        // Reset zoom when image changes after AI filter
+        if (zoomContainer != null) zoomContainer.resetZoom();
         Toast.makeText(this, "AI: Đã áp dụng bộ lọc " + filterName, Toast.LENGTH_SHORT).show();
     }
 

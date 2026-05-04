@@ -60,25 +60,29 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <ja.burhanrashid52.photoeditor.PhotoEditorView
-        android:id="@+id/photoEditorView"
+    <com.example.app_xhinh_anh.ui.editor.ZoomableFrameLayout
+        android:id="@+id/zoomContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="8dp"
+        android:clipChildren="false"
         app:layout_constraintBottom_toTopOf="@+id/editorBottomPanel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
 
-    <com.example.app_xhinh_anh.ui.editor.MaskOverlayView
-        android:id="@+id/maskOverlayView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/photoEditorView"
-        app:layout_constraintEnd_toEndOf="@+id/photoEditorView"
-        app:layout_constraintStart_toStartOf="@+id/photoEditorView"
-        app:layout_constraintTop_toTopOf="@+id/photoEditorView" />
+        <ja.burhanrashid52.photoeditor.PhotoEditorView
+            android:id="@+id/photoEditorView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.example.app_xhinh_anh.ui.editor.MaskOverlayView
+            android:id="@+id/maskOverlayView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+    </com.example.app_xhinh_anh.ui.editor.ZoomableFrameLayout>
 
     <FrameLayout
         android:id="@+id/editorBottomPanel"
