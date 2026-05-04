@@ -29,7 +29,6 @@ public class ZoomableFrameLayout extends FrameLayout {
     private boolean isScaling = false;
     private boolean twoFingerActive = false;
     private float lastFocusX, lastFocusY;
-    private boolean firstTouchDown = false;
 
     public ZoomableFrameLayout(Context context) {
         this(context, null);
@@ -129,57 +128,36 @@ public class ZoomableFrameLayout extends FrameLayout {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         int action = ev.getActionMasked();
 
-        switch (action) {
-            case MotionEvent.ACTION_DOWN:
-                // ⭐ Theo dõi ngón tay đầu tiên
-                firstTouchDown = true;
-                twoFingerActive = false;
-                break;
-
-            case MotionEvent.ACTION_POINTER_DOWN:
-                // ⭐ Ngón tay thứ 2 xuống → activate pinch mode
-                if (ev.getPointerCount() >= 2) {
-                    twoFingerActive = true;
-                    lastFocusX = (ev.getX(0) + ev.getX(1)) / 2f;
-                    lastFocusY = (ev.getY(0) + ev.getY(1)) / 2f;
-                    // Hủy touch handler của child
-                    MotionEvent cancelEvent = MotionEvent.obtain(ev);
-                    cancelEvent.setAction(MotionEvent.ACTION_CANCEL);
-                    super.dispatchTouchEvent(cancelEvent);
-                    cancelEvent.recycle();
-                    return true;  // Chặn child nhận ngón tay thứ 2
-                }
-                break;
-
-            case MotionEvent.ACTION_UP:
-            case MotionEvent.ACTION_CANCEL:
-                firstTouchDown = false;
-                twoFingerActive = false;
-                break;
-        }
-
-        // Nếu đang pinch, chặn child từ nhận events
-        if (twoFingerActive) {
+        if (action == MotionEvent.ACTION_DOWN) {
+            twoFingerActive = false;
+        } else if (action == MotionEvent.ACTION_POINTER_DOWN && ev.getPointerCount() >= 2) {
+            // Ngón thứ 2 xuống → activate pinch, hủy touch của child (vd: nét brush dở).
+            twoFingerActive = true;
+            lastFocusX = (ev.getX(0) + ev.getX(1)) / 2f;
+            lastFocusY = (ev.getY(0) + ev.getY(1)) / 2f;
+            MotionEvent cancel = MotionEvent.obtain(ev);
+            cancel.setAction(MotionEvent.ACTION_CANCEL);
+            super.dispatchTouchEvent(cancel);
+            cancel.recycle();
             return true;
         }
 
-        return super.onInterceptTouchEvent(ev);
+        return twoFingerActive || super.onInterceptTouchEvent(ev);
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         int action = ev.getActionMasked();
 
-        // Double-tap chỉ có nghĩa khi 1 ngón
-        if (!twoFingerActive && firstTouchDown && ev.getPointerCount() == 1) {
+        // Pass MỌI sự kiện 1-ngón vào tapDetector để nó nhận ACTION_DOWN — bắt buộc
+        // cho double-tap detection. Chỉ skip khi đang ở chế độ pinch (đã có ngón 2).
+        if (!twoFingerActive && ev.getPointerCount() == 1) {
             tapDetector.onTouchEvent(ev);
         }
 
         if (twoFingerActive) {
-            // ⭐ Cho ScaleGestureDetector xử lý 2 ngón
             scaleDetector.onTouchEvent(ev);
 
-            // Pan khi có 2 ngón nhưng không phóng to/thu nhỏ
             if (action == MotionEvent.ACTION_MOVE
                     && ev.getPointerCount() >= 2
                     && !isScaling
@@ -193,16 +171,14 @@ public class ZoomableFrameLayout extends FrameLayout {
                 lastFocusX = fx;
                 lastFocusY = fy;
             } else if (action == MotionEvent.ACTION_POINTER_UP && ev.getPointerCount() == 2) {
-                // Cập nhật focus khi một ngón rời
                 int remaining = ev.getActionIndex() == 0 ? 1 : 0;
                 lastFocusX = ev.getX(remaining);
                 lastFocusY = ev.getY(remaining);
             } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 twoFingerActive = false;
-                firstTouchDown = false;
             }
 
-            return true;  // Consume event khi đang pinch
+            return true;
         }
 
         return super.dispatchTouchEvent(ev);
