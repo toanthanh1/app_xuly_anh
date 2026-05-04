@@ -53,6 +53,7 @@ import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCropActivity;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ import java.util.List;
 import java.util.Stack;
 
 import ja.burhanrashid52.photoeditor.OnPhotoEditorListener;
+import ja.burhanrashid52.photoeditor.OnSaveBitmap;
 import ja.burhanrashid52.photoeditor.PhotoEditor;
 import ja.burhanrashid52.photoeditor.PhotoEditorView;
 import ja.burhanrashid52.photoeditor.SaveSettings;
@@ -169,6 +171,9 @@ public class EditorActivity extends AppCompatActivity {
     private int currentBrushColor = 0xFF000000;
     private int currentBrushSize = 20;
     private int currentBrushOpacity = 100;
+    /** Opacity người dùng tự chọn cho pen — phải tách riêng vì highlighter cũng ghi
+     * vào {@code currentBrushOpacity} (cố định 40), khiến pen sau đó kế thừa giá trị 40. */
+    private int lastPenOpacity = 100;
     private View selectedBrushColorView;
     private final ShapeBuilder brushShapeBuilder = new ShapeBuilder()
             .withShapeType(ShapeType.Brush.INSTANCE);
@@ -817,6 +822,11 @@ public class EditorActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
                 currentBrushOpacity = progress;
                 brushOpacityValueText.setText(String.valueOf(progress));
+                // Chỉ ghi nhớ pen-opacity khi user TỰ kéo, không ghi đè khi
+                // selectBrushStyle(HIGHLIGHTER) cưỡng bức 40 qua setProgress.
+                if (fromUser && currentBrushStyle == BRUSH_STYLE_PEN) {
+                    lastPenOpacity = progress;
+                }
                 applyBrushShape();
             }
             @Override public void onStartTrackingTouch(SeekBar sb) {}
@@ -910,8 +920,11 @@ public class EditorActivity extends AppCompatActivity {
                 brushOpacityValueText.setText("40");
                 applyBrushShape();
                 break;
-            default: // PEN
+            default: // PEN — khôi phục opacity user đã chọn (tránh kế thừa 40 từ highlighter)
                 photoEditor.setBrushDrawingMode(true);
+                currentBrushOpacity = lastPenOpacity;
+                brushOpacitySeek.setProgress(lastPenOpacity);
+                brushOpacityValueText.setText(String.valueOf(lastPenOpacity));
                 applyBrushShape();
                 break;
         }
@@ -1439,8 +1452,8 @@ public class EditorActivity extends AppCompatActivity {
                  if (view instanceof TextView) {
                      editingTextView = (TextView) view;
                      isEditingExistingText = true;
-                     loadTextForEditing((TextView) view);
-                     openTextPanel();
+                     loadTextForEditing((TextView) view);  // nạp content + isTextBold/Italic/Underline
+                     openTextPanelForEdit();               // KHÔNG reset format đã nạp
                  }
              }
              @Override public void onAddViewListener(@Nullable ViewType viewType, int i) {
@@ -1617,7 +1630,7 @@ public class EditorActivity extends AppCompatActivity {
         setupTextControls(btnTextCancel, btnTextDone);
 
 
-        btnCrop.setOnClickListener(v -> startCrop(currentImageUri));
+        btnCrop.setOnClickListener(v -> startCropWithCurrentEdits());
         
         btnFlipHorizontal.setOnClickListener(v -> flipImage(-1, 1));
         btnFlipVertical.setOnClickListener(v -> flipImage(1, -1));
@@ -1750,11 +1763,33 @@ public class EditorActivity extends AppCompatActivity {
          });
     }
 
+    /** Mở panel cho thêm văn bản MỚI — toggle nếu đang mở; reset hết format. */
     private void openTextPanel() {
         if (textPanel.getVisibility() == View.VISIBLE) {
             closeTextPanel();
             return;
         }
+        // Reset format VÀ trạng thái edit cho luồng "thêm mới"
+        isTextBold = false;
+        isTextItalic = false;
+        isTextUnderline = false;
+        editingTextView = null;
+        isEditingExistingText = false;
+        if (textInput != null) textInput.setText("");
+        showTextPanel();
+    }
+
+    /** Mở panel cho EDIT văn bản đã có — KHÔNG reset format (đã được loadTextForEditing nạp). */
+    private void openTextPanelForEdit() {
+        // Force-show, kể cả khi đã VISIBLE (tránh nhánh toggle-close của openTextPanel).
+        showTextPanel();
+    }
+
+    /**
+     * Phần share của 2 luồng above: đóng panel khác + sync UI từ các flag hiện tại.
+     * KHÔNG đụng vào isTextBold/Italic/Underline — caller chịu trách nhiệm set đúng trước khi gọi.
+     */
+    private void showTextPanel() {
         if (adjustPanel != null && adjustPanel.getVisibility() == View.VISIBLE) {
             adjustPanel.setVisibility(View.GONE);
             photoEditorView.getSource().clearColorFilter();
@@ -1771,6 +1806,9 @@ public class EditorActivity extends AppCompatActivity {
         if (brushPanel != null && brushPanel.getVisibility() == View.VISIBLE) {
             closeBrushPanel();
         }
+        // Bảo đảm brush mode tắt — nếu còn ON, BrushDrawingView sẽ nuốt mọi tap,
+        // chặn user tap text view để edit.
+        photoEditor.setBrushDrawingMode(false);
         if (smartEraserPanel != null && smartEraserPanel.getVisibility() == View.VISIBLE) {
             closeSmartEraserPanel();
         }
@@ -1778,17 +1816,12 @@ public class EditorActivity extends AppCompatActivity {
             closeMaskPanel();
         }
         if (stickerManager != null) stickerManager.closeStickerPanel();
-        
-        // Reset text formatting
-        isTextBold = false;
-        isTextItalic = false;
-        isTextUnderline = false;
-        
+
         if (textFontRow.getChildCount() == 0) populateTextFontRow();
         if (textColorRow.getChildCount() == 0) populateTextColorRow();
         selectTextTab(currentTextTab);
         updateTextAlignTints();
-        // Sync trạng thái nút Bold/Italic/Underline theo state hiện tại
+        // Sync trạng thái nút Bold/Italic/Underline theo state HIỆN TẠI (đã được caller set)
         int active = ContextCompat.getColor(this, R.color.brand_green);
         int inactive = ContextCompat.getColor(this, R.color.white);
         btnTextBold.setColorFilter(isTextBold ? active : inactive);
@@ -2447,6 +2480,47 @@ public class EditorActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Composite trạng thái HIỆN TẠI (source bitmap + filter preview + brush + text + sticker)
+     * thành 1 PNG temp rồi đưa vào UCrop. Trước đây crop chỉ đọc {@code currentImageUri}
+     * (ảnh gốc / lần crop cuối) nên các edit khác bị mất khi crop.
+     */
+    private void startCropWithCurrentEdits() {
+        // Đóng các panel preview để source bitmap không bị color-filter trùng
+        // (filter live preview để lại ColorFilter trên ImageView — saveAsBitmap đã render
+        // qua canvas nên vẫn lấy đúng pixel màu, không cần xử lý thêm).
+        SaveSettings settings = new SaveSettings.Builder()
+                .setClearViewsEnabled(false)
+                .setTransparencyEnabled(false)
+                .build();
+        photoEditor.saveAsBitmap(settings, new OnSaveBitmap() {
+            @Override
+            public void onBitmapReady(Bitmap savedBitmap) {
+                runOnUiThread(() -> {
+                    try {
+                        File f = new File(getCacheDir(),
+                                "crop_src_" + System.currentTimeMillis() + ".png");
+                        try (FileOutputStream out = new FileOutputStream(f)) {
+                            savedBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                        }
+                        startCrop(Uri.fromFile(f));
+                    } catch (Exception e) {
+                        Toast.makeText(EditorActivity.this,
+                                "Lỗi chuẩn bị crop: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                runOnUiThread(() -> Toast.makeText(EditorActivity.this,
+                        "Lỗi chuẩn bị crop: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
     private void startCrop(Uri uri) {
         if (uri == null) return;
         String destinationFileName = "CroppedImage_" + System.currentTimeMillis() + ".jpg";
@@ -2492,7 +2566,16 @@ public class EditorActivity extends AppCompatActivity {
                 // Lưu bitmap trước khi crop để undo có thể quay về
                 saveBitmapState();
                 currentImageUri = resultUri;
+                photoEditorView.getSource().clearColorFilter();
                 photoEditorView.getSource().setImageURI(currentImageUri);
+                // Crop input đã composite mọi overlay (text/sticker/brush) — clear views
+                // gốc để chúng không bị nhân đôi (vừa baked vừa còn nổi trên top).
+                isPerformingUndoRedo = true;
+                try {
+                    photoEditor.clearAllViews();
+                } finally {
+                    isPerformingUndoRedo = false;
+                }
                 if (zoomContainer != null) zoomContainer.resetZoom();
             }
         } else if (resultCode == RESULT_OK && requestCode == AI_REQUEST_CODE && data != null) {
